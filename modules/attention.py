@@ -35,3 +35,15 @@ class Attention(nn.Module):
 
     out = objects * weights
     return out
+
+
+if __name__ == '__main__':
+  import torch
+  from torch.autograd import Variable
+
+  inputs = torch.rand(10, 3, 1024)
+  objects = torch.rand(10, 3, 512)
+
+  attention = Attention(3, 1024, 512)
+  out = attention.forward(Variable(inputs), Variable(objects))
+  print out.size()
