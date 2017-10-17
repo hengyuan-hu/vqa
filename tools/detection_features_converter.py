@@ -29,8 +29,11 @@ import h5py
 csv.field_size_limit(sys.maxsize)
 
 FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
-infile = 'data/test2014_resnet101_faster_rcnn_genome_36.tsv'
-outfile = 'data/test_bottom_up.hdf5'
+# infile = '../data/test2014_resnet101_faster_rcnn_genome_36.tsv'
+# outfile = '../data/test_bottom_up.hdf5'
+
+infile = 'data/trainval_36/trainval_resnet101_faster_rcnn_genome_36.tsv'
+outfile = 'data/trainval36_bottom_up.hdf5'
 
 feature_length = 2048
 num_fixed_boxes = 36
@@ -78,4 +81,3 @@ if __name__ == '__main__':
 
     f.close()
     print("done!")
-

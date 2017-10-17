@@ -1,5 +1,8 @@
+import torch
 import torch.nn as nn
 from torch.autograd import Variable
+import numpy as np
+import utils
 
 
 class RNNModel(nn.Module):
@@ -13,7 +16,7 @@ class RNNModel(nn.Module):
         self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
         if tie_weights:
-            assert hid == ninp, 'When using the tied flag, nhid must be equal to emsize'
+            assert hid == ninp,'When using the tied flag, nhid must be equal to emsize'
             self.decoder.weight = self.encoder.weight
 
         self.init_weights()
@@ -30,9 +33,12 @@ class RNNModel(nn.Module):
 
     def forward(self, input, hidden):
         emb = self.drop(self.encoder(input))
+        print emb.size()
         output, hidden = self.rnn(emb, hidden)
+        print output.size()
         output = self.drop(output)
-        decoded = self.decoder(output.view(output.size(0)*output.size(1), output.size(2)))
+        decoded = self.decoder(
+            output.view(output.size(0)*output.size(1), output.size(2)))
         return decoded.view(output.size(0), output.size(1), decoded.size(1)), hidden
 
     def init_hidden(self, bsz):
@@ -42,3 +48,61 @@ class RNNModel(nn.Module):
                     Variable(weight.new(self.nlayers, bsz, self.nhid).zero_()))
         else:
             return Variable(weight.new(self.nlayers, bsz, self.nhid).zero_())
+
+
+class QuestionEmbedding(nn.Module):
+    def __init__(self, ntoken, emb_dim, nhid, nlayers, rnn_type='GRU'):
+        """Module for question embedding
+
+        The ntoken-th dim is used for padding_idx, which agrees *implicitly*
+        with the definition in Dictionary.
+        """
+        super(QuestionEmbedding, self).__init__()
+        self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
+        self.rnn = nn.GRU(emb_dim, nhid, nlayers) # TODO: dropout?
+
+        self.ntoken = ntoken
+        self.emb_dim = emb_dim
+        self.nhid = nhid
+        self.nlayers = nlayers
+        self.rnn_type = rnn_type
+
+    def init_embedding(self, np_file):
+        weight_init = torch.from_numpy(np.load(np_file))
+        utils.assert_eq(weight_init.shape, (self.ntoken, self.emb_dim))
+        self.emb.weight.data[:self.ntoken] = weight_init
+
+    def init_hidden(self, batch):
+        # just to get the type of tensor
+        weight = next(self.parameters()).data
+        if self.rnn_type == 'LSTM':
+            return (Variable(weight.new(self.nlayers, batch, self.nhid).zero_()),
+                    Variable(weight.new(self.nlayers, batch, self.nhid).zero_()))
+        else:
+            return Variable(weight.new(self.nlayers, batch, self.nhid).zero_())
+
+    def forward(self, x):
+        _, batch = x.size() # x: [sequence length, batch]
+        hidden = self.init_hidden(batch)
+        emb = self.emb(x)
+        output, hidden = self.rnn(emb, hidden)
+        return output[-1]
+
+
+if __name__ == '__main__':
+    from dataset import Dictionary, VQADataset
+
+    dictionary = Dictionary.load_from_file('data/dictionary.pkl')
+    dset = VQADataset('val', 256, dictionary)
+    dset.tokenize()
+
+    batch = 20
+    token_data = []
+    for i in range(batch):
+        token_data.append(dset.entries[i]['q_token'])
+    token_data = torch.from_numpy(np.array(token_data)).t()
+    model = QuestionEmbedding(dictionary.ntoken, 300, 512, 1)
+    model.init_embedding('data/glove6b_init_300d.npy')
+
+    y = model.forward(Variable(token_data))
+    print y.size()
