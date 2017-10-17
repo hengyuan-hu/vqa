@@ -7,7 +7,7 @@ from torch.autograd import Variable
 import numpy as np
 
 import dataset
-from language_model import RNNModel
+from modules.language_model import RNNModel
 
 
 def parse_args():
