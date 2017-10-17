@@ -9,8 +9,8 @@ class TopDownAttention(Attention):
   question embedding.
   '''
 
-  def __init__(self, num_features, q_dim, v_dim, hidden_dim):
-    super(TopDownAttention, self).__init__(num_features, q_dim + v_dim, hidden_dim)
+  def __init__(self, q_dim, v_dim, hidden_dim):
+    super(TopDownAttention, self).__init__(q_dim + v_dim, hidden_dim)
 
   def forward(self, v, q):
     '''

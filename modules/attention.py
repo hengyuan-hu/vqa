@@ -8,7 +8,7 @@ class Attention(nn.Module):
   over a set of objects.
   '''
 
-  def __init__(self, num_objects, in_dim, hidden_dim):
+  def __init__(self, in_dim, hidden_dim):
     super(Attention, self).__init__()
 
     self.nonlinear = GatedTanh(in_dim, hidden_dim)
@@ -21,6 +21,8 @@ class Attention(nn.Module):
 
     objects   Final output is sum(a_i * o_i) for all objects o_i
               Dimensions: batch_size x num_objects x obj_dim
+
+    return    [batch_size, num_objects, obj_dim]
     '''
     assert inputs.size()[:2] == objects.size()[:2]
     batch_size, num_objects, _ = inputs.size()
