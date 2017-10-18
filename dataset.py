@@ -157,7 +157,6 @@ class VQAImageDataset(VQADataset):
                  answer_transform=None,
                  dataroot='data'):
         super(VQADataset, self).__init__()
-        # assert False, 'Deprecated'
         assert name in ['train', 'val']
 
         # self.img_transform = img_transform
