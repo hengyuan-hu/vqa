@@ -25,24 +25,26 @@ import pickle
 csv.field_size_limit(sys.maxsize)
 
 FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
-infile = 'data/test2014_resnet101_faster_rcnn_genome_36.tsv'
-data_outfile = 'data/test_bottom_up.hdf5'
-indices_outfile = 'data/test_bottom_up_indicies.pkl'
+infile = 'data/trainval_36/trainval_resnet101_faster_rcnn_genome_36.tsv'
+data_outfile = 'data/trainval_bottom_up.hdf5'
+indices_outfile = 'data/trainval_bottom_up_indicies.pkl'
 
 feature_length = 2048
 num_fixed_boxes = 36
 
 if __name__ == '__main__':
     # Verify we can read a tsv
-    in_data = {}
+    with open(infile, "r+b") as tsv_in_file:
+        reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames = FIELDNAMES)
+        total_count = sum(1 for item in reader)
 
     h = h5py.File(data_outfile, "w")
     f = open(indices_outfile, "w")
     indices = {}
 
     counter = 0
-    img_features = h.create_dataset('image_features', (len(in_data), num_fixed_boxes, feature_length), 'f')
-    img_bb = h.create_dataset('image_bb', (len(in_data), num_fixed_boxes, 4), 'f')
+    img_features = h.create_dataset('image_features', (total_count, num_fixed_boxes, feature_length), 'f')
+    img_bb = h.create_dataset('image_bb', (total_count, num_fixed_boxes, 4), 'f')
 
     print("reading tsv...")
     with open(infile, "r+b") as tsv_in_file:
