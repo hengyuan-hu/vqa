@@ -82,7 +82,7 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(self.nlayers, batch, self.nhid).zero_())
 
     def forward(self, x):
-        _, batch = x.size() # x: [sequence length, batch]
+        _, batch = x.size() # x: [sequence_length, batch]
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
         output, hidden = self.rnn(emb, hidden)
@@ -100,6 +100,7 @@ if __name__ == '__main__':
     token_data = []
     for i in range(batch):
         token_data.append(dset.entries[i]['q_token'])
+    # (sentence_length, batch_size)
     token_data = torch.from_numpy(np.array(token_data)).t()
     model = QuestionEmbedding(dictionary.ntoken, 300, 512, 1)
     model.init_embedding('data/glove6b_init_300d.npy')
