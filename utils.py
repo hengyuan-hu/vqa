@@ -25,3 +25,12 @@ def load_folder(folder, suffix):
         if f.endswith(suffix):
             imgs.append(os.path.join(folder, f))
     return imgs
+
+
+def load_imageid(folder):
+    images = load_folder(folder, 'jpg')
+    img_ids = set()
+    for img in images:
+        img_id = int(img.split('/')[-1].split('.')[0].split('_')[-1])
+        img_ids.add(img_id)
+    return img_ids

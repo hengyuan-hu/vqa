@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image
 import utils
 import cPickle
+import h5py
 
 
 class Dictionary(object):
@@ -115,6 +116,9 @@ def _load_dataset(dataroot, name, img_id2val):
         utils.assert_eq(questions[qidx]['question_id'], answers[qidx]['question_id'])
         utils.assert_eq(questions[qidx]['image_id'], answers[qidx]['image_id'])
         img_id = questions[qidx]['image_id']
+        # to handle the small dev set, normally this should not happen
+        if img_id not in img_id2val:
+            continue
         entries.append(_create_entry(
             img_id2val[img_id], questions[qidx], answers[qidx]))
 
@@ -128,6 +132,25 @@ def pil_loader(path):
 
 
 class VQADataset(Dataset):
+
+    def tokenize(self, max_length=14):
+        """Tokenizes the questions.
+
+        This will add q_token in each entry of the dataset.
+        -1 represent nil, and should be treated as padding_idx in embedding
+        """
+        for entry in self.entries:
+            tokens = self.dictionary.tokenize(entry['question'], False)
+            tokens = tokens[:max_length]
+            if len(tokens) < max_length:
+                # TODO: note here we pad in front of the sentence
+                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
+                tokens = padding + tokens
+            utils.assert_eq(len(tokens), max_length)
+            entry['q_token'] = tokens
+
+
+class VQAImageDataset(VQADataset):
     def __init__(self, name, img_size, dictionary,
                  # img_transform=None,
                  question_transform=None,
@@ -158,22 +181,6 @@ class VQADataset(Dataset):
             self.img_id2idx[img_id] = idx
         self.entries = _load_dataset(dataroot, name, self.img_id2idx)
 
-    def tokenize(self, max_length=14):
-        """Tokenizes the questions.
-
-        This will add q_token in each entry of the dataset.
-        -1 represent nil, and should be treated as padding_idx in embedding
-        """
-        for entry in self.entries:
-            tokens = self.dictionary.tokenize(entry['question'], False)
-            tokens = tokens[:max_length]
-            if len(tokens) < max_length:
-                # TODO: note here we pad in front of the sentence
-                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
-                tokens = padding + tokens
-            utils.assert_eq(len(tokens), max_length)
-            entry['q_token'] = tokens
-
     def __getitem__(self, index):
         entry = self.entries[index]
         img = pil_loader(entry['image'])
@@ -193,36 +200,48 @@ class VQADataset(Dataset):
         return len(self.entries)
 
 
-class VQAFeatureDataset(Dataset):
-    def __init__(self, name, dictionary):
+class VQAFeatureDataset(VQADataset):
+    def __init__(self, name, dictionary, dataroot='data'):
         super(VQAFeatureDataset, self).__init__()
-        assert name in ['train', 'val']
+        assert name in ['train', 'val', 'dev']
 
+        if name == 'train' or name == 'val':
+            self.img_id2idx = cPickle.load(
+                open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
+            print 'loading features from h5 file'
+            h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
+            with h5py.File(h5_path, 'r') as hf:
+                self.features = np.array(hf.get('image_features'))
+                self.bboxes = np.array(hf.get('image_bb'))
+            self.entries = _load_dataset(dataroot, name, self.img_id2idx)
+        else:
+            self.features = np.load(os.path.join(dataroot, 'dev_features.npy'))
+            self.bboxes = np.load(os.path.join(dataroot, 'dev_bboxes.npy'))
+            self.entries = cPickle.load(
+                open(os.path.join(dataroot, 'dev_entries.pkl')))
 
+    def __getitem__(self, index):
+        entry = self.entries[index]
+        question = entry['question']
+        answer = entry['answer']
+        features = self.features[entry['image']]
+        return features, question, answer
+
+    def __len__(self):
+        return len(self.entries)
 
 
 if __name__ == '__main__':
     import time
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    dset = VQADataset('val', 256, dictionary)
-    dset.tokenize()
+    dset = VQAFeatureDataset('dev', dictionary)
+    dataloader = torch.utils.data.DataLoader(
+        dset, batch_size=100, shuffle=True, num_workers=0, drop_last=False)
 
-    token_data = torch.from_numpy(np.array(dset.entries[0]['q_token']))
-    emb_layer = torch.nn.Embedding(
-        dictionary.ntoken+1, 300, padding_idx=dictionary.padding_idx)
-    emb_init = torch.from_numpy(np.load('data/glove6b_init_300d.npy'))
-    print emb_init.size()
-    print emb_layer.weight.data.size()
-    emb_layer.weight.data[:dictionary.ntoken] = emb_init
-
-
-    # dataloader = torch.utils.data.DataLoader(
-    #     dset, batch_size=100, shuffle=True, num_workers=0, drop_last=False)
-    # t = time.time()
-    # for b, (x, y, z) in enumerate(dataloader):
-    #     a = x
-    #     if b >= len(dataloader) / 100:
-    #         break
-    # print('time: %.2f' % (time.time() - t))
-    # corpus = Corpus(dset.get_raw_questions('train'), dset.get_raw_questions('valid'))
+    t = time.time()
+    for b, (x, y, z) in enumerate(dataloader):
+        a = x
+        if b >= len(dataloader):
+            break
+    print('time: %.2f' % (time.time() - t))
