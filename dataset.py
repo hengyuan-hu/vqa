@@ -85,6 +85,8 @@ class PTBCorpus(Corpus):
 
 
 def _create_entry(img, question, answer):
+    answer.pop('image_id')
+    answer.pop('question_id')
     entry = {
         'question_id' : question['question_id'],
         'image_id'    : question['image_id'],
