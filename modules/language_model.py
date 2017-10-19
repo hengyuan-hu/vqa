@@ -16,7 +16,8 @@ class RNNModel(nn.Module):
         self.rnn = getattr(nn, rnn_type)(ninp, nhid, nlayers, dropout=dropout)
         self.decoder = nn.Linear(nhid, ntoken)
         if tie_weights:
-            assert hid == ninp,'When using the tied flag, nhid must be equal to emsize'
+            assert nhid == ninp, \
+                'When using the tied flag, nhid must be equal to emsize'
             self.decoder.weight = self.encoder.weight
 
         self.init_weights()

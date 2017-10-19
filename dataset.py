@@ -1,17 +1,19 @@
 import os
 import json
+import numpy as np
+import utils
+import h5py
 import torch
 from torch.utils.data import Dataset
 import torchvision
-import numpy as np
-from PIL import Image
-import utils
-import cPickle
-import h5py
 
 
 class Dictionary(object):
-    def __init__(self, word2idx={}, idx2word=[]):
+    def __init__(self, word2idx=None, idx2word=None):
+        if word2idx is None:
+            word2idx = {}
+        if idx2word is None:
+            idx2word = []
         self.word2idx = word2idx
         self.idx2word = idx2word
 
@@ -104,11 +106,11 @@ def _load_dataset(dataroot, name, img_id2val):
     name: 'train', 'val'
     """
     question_path = os.path.join(
-        dataroot,'v2_OpenEnded_mscoco_%s2014_questions.json' % name)
+        dataroot, 'v2_OpenEnded_mscoco_%s2014_questions.json' % name)
     questions = sorted(json.load(open(question_path))['questions'],
                        key=lambda x: x['question_id'])
     # answer_path = os.path.join(
-    #     dataroot,'v2_mscoco_%s2014_annotations.json' % name)
+    #     dataroot, 'v2_mscoco_%s2014_annotations.json' % name)
     # answers = sorted(json.load(open(answer_path))['annotations'],
     #                  key=lambda x: x['question_id'])
     answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
@@ -117,23 +119,13 @@ def _load_dataset(dataroot, name, img_id2val):
 
     utils.assert_eq(len(questions), len(answers))
     entries = []
-    for qidx in range(len(questions)):
-        utils.assert_eq(questions[qidx]['question_id'], answers[qidx]['question_id'])
-        utils.assert_eq(questions[qidx]['image_id'], answers[qidx]['image_id'])
-        img_id = questions[qidx]['image_id']
-        # to handle the small dev set, normally this should not happen
-        if img_id not in img_id2val:
-            continue
-        entries.append(_create_entry(
-            img_id2val[img_id], questions[qidx], answers[qidx]))
+    for question, answer in zip(questions, answers):
+        utils.assert_eq(question['question_id'], answer['question_id'])
+        utils.assert_eq(question['image_id'], answer['image_id'])
+        img_id = question['image_id']
+        entries.append(_create_entry(img_id2val[img_id], question, answer))
 
     return entries
-
-
-def pil_loader(path):
-    with open(path, 'rb') as f:
-        with Image.open(f) as img:
-            return img.convert('RGB')
 
 
 class VQADataset(Dataset):
@@ -161,7 +153,7 @@ class VQAImageDataset(VQADataset):
                  question_transform=None,
                  answer_transform=None,
                  dataroot='data'):
-        super(VQADataset, self).__init__()
+        super(VQAImageDataset, self).__init__()
         assert name in ['train', 'val']
 
         # self.img_transform = img_transform
@@ -187,7 +179,7 @@ class VQAImageDataset(VQADataset):
 
     def __getitem__(self, index):
         entry = self.entries[index]
-        img = pil_loader(entry['image'])
+        img = utils.pil_loader(entry['image'])
         question = entry['question']
         answer = entry['answer']
 
@@ -263,7 +255,7 @@ class VQAFeatureDataset(VQADataset):
         scores = answer['scores']
         target = torch.zeros(self.num_ans_candidates)
         if labels is not None:
-            target.scatter_(0, answer['labels'], answer['scores'])
+            target.scatter_(0, labels, scores)
 
         return features, question, target
 

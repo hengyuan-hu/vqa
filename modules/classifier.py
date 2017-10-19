@@ -13,4 +13,5 @@ class SimpleClassifier(object):
         return nn.functional.sigmoid(logits)
 
     def loss(self, x, y):
+        # TODO: implement this
         pass

@@ -46,6 +46,6 @@ if __name__ == '__main__':
   inputs = torch.rand(10, 3, 1024)
   objects = torch.rand(10, 3, 512)
 
-  attention = Attention(3, 1024, 512)
+  attention = Attention(1024, 512)
   out = attention.forward(Variable(inputs), Variable(objects))
   print out.size()
