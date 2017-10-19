@@ -3,6 +3,7 @@ import sys
 import json
 import numpy as np
 import re
+import cPickle
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dataset import Dictionary
@@ -97,26 +98,94 @@ def preprocess_answer(answer):
 
 
 def filter_answers(answers_dset, min_occurence):
+    """This will change the answer to preprocessed version
+    """
     occurence = {}
     for ans_entry in answers_dset:
         answers = ans_entry['answers']
-        unique_answers = set()
+        answer2score = {}
         for answer in answers:
-            if answer['answer_confidence'] != 'yes':
+            # if answer['answer_confidence'] != 'yes':
+            #     continue
+            answer_ = answer['answer']
+            answer_ = preprocess_answer(answer_)
+            if answer_ not in answer2score:
+                answer2score[answer_] = 0
+            answer2score[answer_] += 1
+
+            # this will change the content of answer
+            answer['answer'] = answer_
+        assert ans_entry['multiple_choice_answer'] in answer2score
+
+        for answer in answer2score:
+            # filter out 'incorrect' answers
+            if answer2score[answer] < 3:
                 continue
-            answer_ = preprocess_answer(answer['answer'])
-            unique_answers.add(answer_)
-        for answer in unique_answers:
+
             if answer not in occurence:
-                occurence[answer] = set()
-            occurence[answer].add(ans_entry['image_id'])
+                occurence[answer] = []
+            occurence[answer].append(ans_entry['question_id'])
+
+            # occurence[answer].add(ans_entry['question_id'])
     for answer in occurence.keys():
         if len(occurence[answer]) < min_occurence:
             occurence.pop(answer)
 
-    print 'Num of answers that appear at least %d times: %d' % (
+    print 'Num of answers that appear >= %d times: %d' % (
         min_occurence, len(occurence))
     return occurence
+
+
+def create_ans2label(occurence, name, cache_root='data/cache'):
+    """
+    occurence: dict {answer -> whatever}
+    name: prefix of the output file
+    cache_root: str
+    """
+    ans2label = {}
+    label = 0
+    for answer in occurence:
+        ans2label[answer] = label
+        label += 1
+    cache_file = os.path.join(cache_root, name+'_ans2label.pkl')
+    cPickle.dump(ans2label, open(cache_file, 'wb'))
+    return ans2label
+
+
+def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
+    """Augment answers_dset with soft score as label
+
+    ***answers_dset should be preprocessed***
+
+    Write result into a cache file
+    """
+    target = []
+    for ans_entry in answers_dset:
+        answers = ans_entry['answers']
+        answer_count = {}
+        for answer in answers:
+            answer_ = answer['answer']
+            answer_count[answer_] = answer_count.get(answer_, 0) + 1
+
+        labels = []
+        scores = []
+        for answer in answer_count:
+            if answer not in ans2label:
+                continue
+            labels.append(ans2label[answer])
+            count = float(min(answer_count[answer], 3))
+            scores.append(count / 3.0)
+
+        target.append({
+            'question_id': ans_entry['question_id'],
+            'image_id': ans_entry['image_id'],
+            'labels': labels,
+            'scores': scores
+        })
+
+    cache_file = os.path.join(cache_root, name+'_target.pkl')
+    cPickle.dump(target, open(cache_file, 'wb'))
+    return target
 
 
 def get_answer(qid, answers):

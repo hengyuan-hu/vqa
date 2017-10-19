@@ -103,12 +103,15 @@ def _load_dataset(dataroot, name, img_id2val):
     """
     question_path = os.path.join(
         dataroot,'v2_OpenEnded_mscoco_%s2014_questions.json' % name)
-    answer_path = os.path.join(
-        dataroot,'v2_mscoco_%s2014_annotations.json' % name)
     questions = sorted(json.load(open(question_path))['questions'],
                        key=lambda x: x['question_id'])
-    answers = sorted(json.load(open(answer_path))['annotations'],
-                     key=lambda x: x['question_id'])
+    # answer_path = os.path.join(
+    #     dataroot,'v2_mscoco_%s2014_annotations.json' % name)
+    # answers = sorted(json.load(open(answer_path))['annotations'],
+    #                  key=lambda x: x['question_id'])
+    answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
+    answers = cPickle.load(open(answer_path, 'rb'))
+    answers = sorted(answers, key=lambda x: x['question_id'])
 
     utils.assert_eq(len(questions), len(answers))
     entries = []
@@ -204,6 +207,11 @@ class VQAFeatureDataset(VQADataset):
         super(VQAFeatureDataset, self).__init__()
         assert name in ['train', 'val', 'dev']
 
+        ans2label_path = os.path.join(dataroot, 'cache', 'train_ans2label.pkl')
+        self.ans2label = cPickle.load(open(ans2label_path, 'rb'))
+        self.num_ans_candidates = len(self.ans2label)
+        self.dictionary = dictionary
+
         if name == 'train' or name == 'val':
             self.img_id2idx = cPickle.load(
                 open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
@@ -211,20 +219,51 @@ class VQAFeatureDataset(VQADataset):
             h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
             with h5py.File(h5_path, 'r') as hf:
                 self.features = np.array(hf.get('image_features'))
-                self.bboxes = np.array(hf.get('image_bb'))
+                # self.bboxes = np.array(hf.get('image_bb'))
+
             self.entries = _load_dataset(dataroot, name, self.img_id2idx)
         else:
             self.features = np.load(os.path.join(dataroot, 'dev_features.npy'))
-            self.bboxes = np.load(os.path.join(dataroot, 'dev_bboxes.npy'))
+            # self.bboxes = np.load(os.path.join(dataroot, 'dev_bboxes.npy'))
             self.entries = cPickle.load(
                 open(os.path.join(dataroot, 'dev_entries.pkl')))
 
+        self.tokenize()
+        self.tensorize()
+
+    def tensorize(self):
+        self.features = torch.from_numpy(self.features)
+
+        for entry in self.entries:
+            question = torch.from_numpy(np.array(entry['q_token'], dtype=np.float32))
+            entry['q_token'] = question
+
+            answer = entry['answer']
+            labels = np.array(answer['labels'])
+            scores = np.array(answer['scores'], dtype=np.float32)
+            if len(labels):
+                labels = torch.from_numpy(labels)
+                scores = torch.from_numpy(scores)
+                entry['answer']['labels'] = labels
+                entry['answer']['scores'] = scores
+            else:
+                entry['answer']['labels'] = None
+                entry['answer']['scores'] = None
+
     def __getitem__(self, index):
         entry = self.entries[index]
-        question = entry['question']
-        answer = entry['answer']
+
         features = self.features[entry['image']]
-        return features, question, answer
+        question = entry['q_token']
+
+        answer = entry['answer']
+        labels = answer['labels']
+        scores = answer['scores']
+        target = torch.zeros(self.num_ans_candidates)
+        if labels is not None:
+            target.scatter_(0, answer['labels'], answer['scores'])
+
+        return features, question, target
 
     def __len__(self):
         return len(self.entries)
@@ -236,7 +275,7 @@ if __name__ == '__main__':
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
     dset = VQAFeatureDataset('dev', dictionary)
     dataloader = torch.utils.data.DataLoader(
-        dset, batch_size=100, shuffle=True, num_workers=0, drop_last=False)
+        dset, batch_size=100, shuffle=True, num_workers=4, drop_last=False)
 
     t = time.time()
     for b, (x, y, z) in enumerate(dataloader):
