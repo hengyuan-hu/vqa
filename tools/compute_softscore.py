@@ -11,28 +11,49 @@ import utils
 
 
 contractions = {
-    "aint": "ain't", "arent": "aren't", "cant": "can't", "couldve": "could've", "couldnt": "couldn't", \
-    "couldn'tve": "couldn't've", "couldnt've": "couldn't've", "didnt": "didn't", "doesnt": "doesn't", "dont": "don't", "hadnt": "hadn't", \
-    "hadnt've": "hadn't've", "hadn'tve": "hadn't've", "hasnt": "hasn't", "havent": "haven't", "hed": "he'd", "hed've": "he'd've", \
-    "he'dve": "he'd've", "hes": "he's", "howd": "how'd", "howll": "how'll", "hows": "how's", "Id've": "I'd've", "I'dve": "I'd've", \
-    "Im": "I'm", "Ive": "I've", "isnt": "isn't", "itd": "it'd", "itd've": "it'd've", "it'dve": "it'd've", "itll": "it'll", "let's": "let's", \
-    "maam": "ma'am", "mightnt": "mightn't", "mightnt've": "mightn't've", "mightn'tve": "mightn't've", "mightve": "might've", \
-    "mustnt": "mustn't", "mustve": "must've", "neednt": "needn't", "notve": "not've", "oclock": "o'clock", "oughtnt": "oughtn't", \
-    "ow's'at": "'ow's'at", "'ows'at": "'ow's'at", "'ow'sat": "'ow's'at", "shant": "shan't", "shed've": "she'd've", "she'dve": "she'd've", \
-    "she's": "she's", "shouldve": "should've", "shouldnt": "shouldn't", "shouldnt've": "shouldn't've", "shouldn'tve": "shouldn't've", \
-    "somebody'd": "somebodyd", "somebodyd've": "somebody'd've", "somebody'dve": "somebody'd've", "somebodyll": "somebody'll", \
-    "somebodys": "somebody's", "someoned": "someone'd", "someoned've": "someone'd've", "someone'dve": "someone'd've", \
-    "someonell": "someone'll", "someones": "someone's", "somethingd": "something'd", "somethingd've": "something'd've", \
-    "something'dve": "something'd've", "somethingll": "something'll", "thats": "that's", "thered": "there'd", "thered've": "there'd've", \
-    "there'dve": "there'd've", "therere": "there're", "theres": "there's", "theyd": "they'd", "theyd've": "they'd've", \
-    "they'dve": "they'd've", "theyll": "they'll", "theyre": "they're", "theyve": "they've", "twas": "'twas", "wasnt": "wasn't", \
-    "wed've": "we'd've", "we'dve": "we'd've", "weve": "we've", "werent": "weren't", "whatll": "what'll", "whatre": "what're", \
-    "whats": "what's", "whatve": "what've", "whens": "when's", "whered": "where'd", "wheres": "where's", "whereve": "where've", \
-    "whod": "who'd", "whod've": "who'd've", "who'dve": "who'd've", "wholl": "who'll", "whos": "who's", "whove": "who've", "whyll": "why'll", \
-    "whyre": "why're", "whys": "why's", "wont": "won't", "wouldve": "would've", "wouldnt": "wouldn't", "wouldnt've": "wouldn't've", \
-    "wouldn'tve": "wouldn't've", "yall": "y'all", "yall'll": "y'all'll", "y'allll": "y'all'll", "yall'd've": "y'all'd've", \
-    "y'alld've": "y'all'd've", "y'all'dve": "y'all'd've", "youd": "you'd", "youd've": "you'd've", "you'dve": "you'd've", \
-    "youll": "you'll", "youre": "you're", "youve": "you've"
+    "aint": "ain't", "arent": "aren't", "cant": "can't",
+    "couldve": "could've", "couldnt": "couldn't", "couldn'tve": "couldn't've",
+    "couldnt've": "couldn't've", "didnt": "didn't", "doesnt": "doesn't",
+    "dont": "don't", "hadnt": "hadn't", "hadnt've": "hadn't've",
+    "hadn'tve": "hadn't've", "hasnt": "hasn't", "havent": "haven't",
+    "hed": "he'd", "hed've": "he'd've", "he'dve": "he'd've",
+    "hes": "he's", "howd": "how'd", "howll": "how'll",
+    "hows": "how's", "Id've": "I'd've", "I'dve": "I'd've",
+    "Im": "I'm", "Ive": "I've", "isnt": "isn't", "itd": "it'd",
+    "itd've": "it'd've", "it'dve": "it'd've", "itll": "it'll",
+    "let's": "let's", "maam": "ma'am", "mightnt": "mightn't",
+    "mightnt've": "mightn't've", "mightn'tve": "mightn't've",
+    "mightve": "might've", "mustnt": "mustn't", "mustve": "must've",
+    "neednt": "needn't", "notve": "not've", "oclock": "o'clock",
+    "oughtnt": "oughtn't", "ow's'at": "'ow's'at", "'ows'at": "'ow's'at",
+    "'ow'sat": "'ow's'at", "shant": "shan't", "shed've": "she'd've",
+    "she'dve": "she'd've", "she's": "she's", "shouldve": "should've",
+    "shouldnt": "shouldn't", "shouldnt've": "shouldn't've",
+    "shouldn'tve": "shouldn't've", "somebody'd": "somebodyd",
+    "somebodyd've": "somebody'd've", "somebody'dve": "somebody'd've",
+    "somebodyll": "somebody'll", "somebodys": "somebody's",
+    "someoned": "someone'd", "someoned've": "someone'd've",
+    "someone'dve": "someone'd've", "someonell": "someone'll",
+    "someones": "someone's", "somethingd": "something'd",
+    "somethingd've": "something'd've", "something'dve": "something'd've",
+    "somethingll": "something'll", "thats": "that's", "thered": "there'd",
+    "thered've": "there'd've", "there'dve": "there'd've",
+    "therere": "there're", "theres": "there's", "theyd": "they'd",
+    "theyd've": "they'd've", "they'dve": "they'd've", "theyll": "they'll",
+    "theyre": "they're", "theyve": "they've", "twas": "'twas",
+    "wasnt": "wasn't", "wed've": "we'd've", "we'dve": "we'd've",
+    "weve": "we've", "werent": "weren't", "whatll": "what'll",
+    "whatre": "what're", "whats": "what's", "whatve": "what've",
+    "whens": "when's", "whered": "where'd", "wheres": "where's",
+    "whereve": "where've", "whod": "who'd", "whod've": "who'd've",
+    "who'dve": "who'd've", "wholl": "who'll", "whos": "who's",
+    "whove": "who've", "whyll": "why'll", "whyre": "why're",
+    "whys": "why's", "wont": "won't", "wouldve": "would've",
+    "wouldnt": "wouldn't", "wouldnt've": "wouldn't've",
+    "wouldn'tve": "wouldn't've", "yall": "y'all", "yall'll": "y'all'll",
+    "y'allll": "y'all'll", "yall'd've": "y'all'd've", "y'alld've": "y'all'd've",
+    "y'all'dve": "y'all'd've", "youd": "you'd", "youd've": "you'd've",
+    "you'dve": "you'd've", "youll": "you'll", "youre": "you're", "youve": "you've"
 }
 
 manualMap = { 'none': '0',
@@ -50,7 +71,6 @@ manualMap = { 'none': '0',
 
 articles = ['a', 'an', 'the']
 
-
 periodStrip  = re.compile("(?!<=\d)(\.)(?!\d)")
 commaStrip   = re.compile("(\d)(\,)(\d)")
 punct        = [';', r"/", '[', ']', '"', '{', '}',
@@ -61,7 +81,8 @@ punct        = [';', r"/", '[', ']', '"', '{', '}',
 def processPunctuation(inText):
     outText = inText
     for p in punct:
-        if (p + ' ' in inText or ' ' + p in inText) or (re.search(commaStrip, inText) != None):
+        if (p + ' ' in inText or ' ' + p in inText) \
+           or (re.search(commaStrip, inText) != None):
             outText = outText.replace(p, '')
         else:
             outText = outText.replace(p, ' ')
@@ -92,8 +113,8 @@ def multiple_replace(text, wordDict):
 
 
 def preprocess_answer(answer):
-    # answer = processDigitArticle(processPunctuation(answer))
-    answer.replace('&', 'and')
+    answer = processDigitArticle(processPunctuation(answer))
+    answer = answer.replace(',', '')
     return answer
 
 
@@ -101,32 +122,14 @@ def filter_answers(answers_dset, min_occurence):
     """This will change the answer to preprocessed version
     """
     occurence = {}
+
     for ans_entry in answers_dset:
         answers = ans_entry['answers']
-        answer2score = {}
-        for answer in answers:
-            # if answer['answer_confidence'] != 'yes':
-            #     continue
-            answer_ = answer['answer']
-            answer_ = preprocess_answer(answer_)
-            if answer_ not in answer2score:
-                answer2score[answer_] = 0
-            answer2score[answer_] += 1
-
-            # this will change the content of answer
-            answer['answer'] = answer_
-        assert ans_entry['multiple_choice_answer'] in answer2score
-
-        for answer in answer2score:
-            # filter out 'incorrect' answers
-            if answer2score[answer] < 3:
-                continue
-
-            if answer not in occurence:
-                occurence[answer] = []
-            occurence[answer].append(ans_entry['question_id'])
-
-            # occurence[answer].add(ans_entry['question_id'])
+        gtruth = ans_entry['multiple_choice_answer']
+        gtruth = preprocess_answer(gtruth)
+        if gtruth not in occurence:
+            occurence[gtruth] = set()
+        occurence[gtruth].add(ans_entry['question_id'])
     for answer in occurence.keys():
         if len(occurence[answer]) < min_occurence:
             occurence.pop(answer)
@@ -137,18 +140,24 @@ def filter_answers(answers_dset, min_occurence):
 
 
 def create_ans2label(occurence, name, cache_root='data/cache'):
-    """
+    """Note that this will also create label2ans.pkl at the same time
+
     occurence: dict {answer -> whatever}
     name: prefix of the output file
     cache_root: str
     """
     ans2label = {}
+    label2ans = []
     label = 0
     for answer in occurence:
+        label2ans.append(answer)
         ans2label[answer] = label
         label += 1
+
     cache_file = os.path.join(cache_root, name+'_ans2label.pkl')
     cPickle.dump(ans2label, open(cache_file, 'wb'))
+    cache_file = os.path.join(cache_root, name+'_label2answer.pkl')
+    cPickle.dump(label2ans, open(cache_file, 'wb'))
     return ans2label
 
 
@@ -200,7 +209,20 @@ def get_question(qid, questions):
             return question
 
 
-# if __name__ == '__main__':
-#     filename = 'data/v2_mscoco_train2014_annotations.json'
-#     answers = json.load(open(filename))['annotations']
-#     occurence = filter_answers(answers, 9)
+if __name__ == '__main__':
+    train_answer_file = 'data/v2_mscoco_train2014_annotations.json'
+    train_answers = json.load(open(train_answer_file))['annotations']
+
+    val_answer_file = 'data/v2_mscoco_val2014_annotations.json'
+    val_answers = json.load(open(val_answer_file))['annotations']
+
+    train_question_file = 'data/v2_OpenEnded_mscoco_train2014_questions.json'
+    train_questions = json.load(open(train_question_file))['questions']
+
+    val_question_file = 'data/v2_OpenEnded_mscoco_val2014_questions.json'
+    val_questions = json.load(open(val_question_file))['questions']
+
+    answers = train_answers + val_answers
+    occurence = filter_answers(answers, 9)
+    ans2label = create_ans2label(occurence, 'trainval')
+    compute_target(answers, ans2label, 'trainval')
