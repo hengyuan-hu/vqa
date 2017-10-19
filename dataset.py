@@ -237,7 +237,7 @@ class VQAFeatureDataset(VQADataset):
         self.features = torch.from_numpy(self.features)
 
         for entry in self.entries:
-            question = torch.from_numpy(np.array(entry['q_token'], dtype=np.float32))
+            question = torch.from_numpy(np.array(entry['q_token']))
             entry['q_token'] = question
 
             answer = entry['answer']

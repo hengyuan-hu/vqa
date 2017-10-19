@@ -85,25 +85,26 @@ class QuestionEmbedding(nn.Module):
         _, batch = x.size() # x: [sequence_length, batch]
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
+        # emb: [sequence, batch, emb_dim]
         output, hidden = self.rnn(emb, hidden)
         return output[-1]
 
 
 if __name__ == '__main__':
-    from dataset import Dictionary, VQADataset
+    from dataset import Dictionary, VQAFeatureDataset
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    dset = VQADataset('val', 256, dictionary)
-    dset.tokenize()
+    dset = VQAFeatureDataset('dev', dictionary)
 
     batch = 20
-    token_data = []
-    for i in range(batch):
-        token_data.append(dset.entries[i]['q_token'])
-    # (sentence_length, batch_size)
-    token_data = torch.from_numpy(np.array(token_data)).t()
+    dataloader = torch.utils.data.DataLoader(
+        dset, batch_size=batch, shuffle=True, num_workers=4, drop_last=False)
+
+    i, (v, q, a) = next(enumerate(dataloader))
     model = QuestionEmbedding(dictionary.ntoken, 300, 512, 1)
     model.init_embedding('data/glove6b_init_300d.npy')
 
-    y = model.forward(Variable(token_data))
+    print q.size()
+    q = q.t() # [sequence, batch]
+    y = model.forward(Variable(q))
     print y.size()
