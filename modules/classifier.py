@@ -3,8 +3,9 @@ import torch.nn as nn
 from gated_tanh import GatedTanh
 
 
-class SimpleClassifier(object):
+class SimpleClassifier(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim):
+        super(SimpleClassifier, self).__init__()
         layers = [GatedTanh(in_dim, hid_dim), nn.Linear(hid_dim, out_dim)]
         self.main = nn.Sequential(*layers)
 
@@ -13,5 +14,7 @@ class SimpleClassifier(object):
         return nn.functional.sigmoid(logits)
 
     def loss(self, x, y):
-        # TODO: implement this
-        pass
+        logits = self.main(x)
+        l = nn.functional.binary_cross_entropy_with_logits(logits, y)
+        l *= y.size(1)
+        return l

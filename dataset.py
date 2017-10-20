@@ -1,5 +1,6 @@
 import os
 import json
+import cPickle
 import numpy as np
 import utils
 import h5py
@@ -227,6 +228,7 @@ class VQAFeatureDataset(VQADataset):
 
         self.tokenize()
         self.tensorize()
+        self.v_dim = self.features.size(2)
 
     def tensorize(self):
         self.features = torch.from_numpy(self.features)

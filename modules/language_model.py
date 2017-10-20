@@ -83,7 +83,7 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(self.nlayers, batch, self.nhid).zero_())
 
     def forward(self, x):
-        _, batch = x.size() # x: [sequence_length, batch]
+        batch = x.size(1) # x: [sequence_length, batch]
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
         # emb: [sequence, batch, emb_dim]

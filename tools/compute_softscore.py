@@ -156,7 +156,7 @@ def create_ans2label(occurence, name, cache_root='data/cache'):
 
     cache_file = os.path.join(cache_root, name+'_ans2label.pkl')
     cPickle.dump(ans2label, open(cache_file, 'wb'))
-    cache_file = os.path.join(cache_root, name+'_label2answer.pkl')
+    cache_file = os.path.join(cache_root, name+'_label2ans.pkl')
     cPickle.dump(label2ans, open(cache_file, 'wb'))
     return ans2label
 
@@ -225,4 +225,5 @@ if __name__ == '__main__':
     answers = train_answers + val_answers
     occurence = filter_answers(answers, 9)
     ans2label = create_ans2label(occurence, 'trainval')
-    compute_target(answers, ans2label, 'trainval')
+    compute_target(train_answers, ans2label, 'train')
+    compute_target(val_answers, ans2label, 'val')

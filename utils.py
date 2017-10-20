@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
+import torch.nn as nn
 
 
 EPS = 1e-7
@@ -36,3 +37,22 @@ def pil_loader(path):
     with open(path, 'rb') as f:
         with Image.open(f) as img:
             return img.convert('RGB')
+
+
+def weights_init(m):
+    """custom weights initialization called on net_g and net_f."""
+    cname = m.__class__
+    if cname == nn.Linear or cname == nn.Conv2d or cname == nn.ConvTranspose2d:
+        m.weight.data.normal_(0.0, 0.02)
+    elif cname == nn.BatchNorm2d:
+        m.weight.data.normal_(1.0, 0.02)
+        m.bias.data.fill_(0)
+    else:
+        print '%s is not initialized.' % cname
+
+
+def init_net(net, net_file):
+    if net_file:
+        net.load_state_dict(torch.load(net_file))
+    else:
+        net.apply(weights_init)

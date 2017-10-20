@@ -10,6 +10,7 @@ class TopDownAttention(Attention):
 
   def __init__(self, q_dim, v_dim, hidden_dim):
     super(TopDownAttention, self).__init__(q_dim + v_dim, hidden_dim)
+    self.q_dim = q_dim
 
   def forward(self, v, q):
     '''
@@ -19,8 +20,8 @@ class TopDownAttention(Attention):
     q      Question embedding
            Dimensions: batch_size x q_dim
     '''
-    q = q.unsqueeze(1)
-    q = q.expand(q.size(0), v.size(1), q.size(2))
+    batch, num_feat, _ = v.size()
+    q = q.unsqueeze(1).expand(batch, num_feat, self.q_dim)
     inputs = torch.cat((v, q), 2)
 
     return super(TopDownAttention, self).forward(inputs, v)
