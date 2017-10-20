@@ -4,13 +4,13 @@ import torch
 from torch.autograd import Variable
 
 
-def train(model, train_dset, eval_dset, num_epochs):
+def train(model, train_dset, eval_dset, num_epochs, batch_size):
     # optim = torch.optim.Adadelta(model.parameters())
     optim = torch.optim.Adam(model.parameters())
 
     for epoch in range(num_epochs):
         dataloader = torch.utils.data.DataLoader(
-            train_dset, batch_size=512, shuffle=True, num_workers=4, drop_last=False)
+            train_dset, batch_size, shuffle=True, num_workers=4)
 
         total_loss = 0
         t = time.time()

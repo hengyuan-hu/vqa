@@ -42,7 +42,6 @@ class BaseModel(nn.Module):
         return joint_repr
 
 
-
 def build_baseline0(dataset):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, 512, 1)
     v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, 512)
