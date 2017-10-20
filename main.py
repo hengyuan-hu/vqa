@@ -50,14 +50,14 @@ if __name__ == '__main__':
     torch.backends.cudnn.benchmark = True
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    train_dset = VQAFeatureDataset('val', dictionary)
-    eval_dset = VQAFeatureDataset('dev', dictionary)
-    # train_dset = VQAFeatureDataset('train', dictionary)
-    # eval_dset = VQAFeatureDataset('val', dictionary)
+    # train_dset = VQAFeatureDataset('dev', dictionary)
+    # eval_dset = VQAFeatureDataset('dev', dictionary)
+    train_dset = VQAFeatureDataset('train', dictionary)
+    eval_dset = VQAFeatureDataset('val', dictionary)
 
     model = base_model.build_baseline0(train_dset).cuda()
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
 
-    train(model, train_dset, train_dset, 50)
+    train(model, train_dset, eval_dset, 50)

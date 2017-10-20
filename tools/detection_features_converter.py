@@ -96,6 +96,7 @@ if __name__ == '__main__':
                 val_img_features[val_counter, :, :] = np.frombuffer(
                     base64.decodestring(item['features']),
                     dtype=np.float32).reshape((item['num_boxes'], -1))
+                val_counter += 1
             else:
                 assert False, 'Unknown image id: %d' % image_id
 

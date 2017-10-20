@@ -33,6 +33,7 @@ class BaseModel(nn.Module):
     def _forward(self, v, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
+
         v_emb = self.v_attention(v, q_emb).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
         # v_repr = 1
