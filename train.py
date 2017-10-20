@@ -5,8 +5,8 @@ from torch.autograd import Variable
 
 
 def train(model, train_dset, eval_dset, num_epochs):
-    optim = torch.optim.Adadelta(model.parameters())
-    # optim = torch.optim.Adam(model.parameters())
+    # optim = torch.optim.Adadelta(model.parameters())
+    optim = torch.optim.Adam(model.parameters(), 1e-4)
 
     for epoch in range(num_epochs):
         dataloader = torch.utils.data.DataLoader(
@@ -53,4 +53,4 @@ def evaluate(model, eval_dset):
         upper_bound += (a.max(1)[0]).sum()
 
     print 'acc: %.2f' % (100.0 * score / len(eval_dset))
-    print 'upper bound: %.2f' % (upper_bound / len(eval_dset))
+    print 'upper bound: %.2f' % (100.0 * upper_bound / len(eval_dset))

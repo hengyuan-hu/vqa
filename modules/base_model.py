@@ -8,9 +8,10 @@ from classifier import SimpleClassifier
 
 class BaseModel(nn.Module):
     def __init__(self, q_emb, v_attention, q_net, v_net, classifier):
+        super(BaseModel, self).__init__()
         self.q_emb = q_emb
         self.v_attention = v_attention
-        self.q_net == q_net
+        self.q_net = q_net
         self.v_net = v_net
         self.classifier = classifier
 
@@ -29,21 +30,22 @@ class BaseModel(nn.Module):
         loss = self.classifier.loss(joint_repr, labels)
         return loss
 
-    def _foward(self, v, q):
+    def _forward(self, v, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
-        v_emb = self.v_attention(v, q).sum(1) # [batch, v_dim]
         q_repr = self.q_net(q_emb)
+        v_emb = self.v_attention(v, q_emb).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
-        assert q_repr.size() == v_repr.size()
+        # v_repr = 1
+        # assert q_repr.size() == v_repr.size()
         joint_repr = q_repr * v_repr
         return joint_repr
 
 
 
 def build_baseline0(dataset):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 512, 1)
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, 512, 1)
     v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, 512)
     q_net = GatedTanh(q_emb.nhid, 512)
     v_net = GatedTanh(dataset.v_dim, 512)
-    # classifier = SimpleClassifier()
+    classifier = SimpleClassifier(512, 1024, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
