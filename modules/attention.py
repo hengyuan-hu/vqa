@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torch.nn.utils.weight_norm import weight_norm
 from gated_tanh import GatedTanh
 
 
@@ -12,7 +13,7 @@ class Attention(nn.Module):
     super(Attention, self).__init__()
 
     self.nonlinear = GatedTanh(in_dim, hidden_dim)
-    self.linear = nn.Linear(hidden_dim, 1)
+    self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)
 
   def forward(self, inputs, objects):
     '''
