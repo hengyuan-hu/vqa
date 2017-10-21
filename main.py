@@ -18,6 +18,8 @@ def parse_args():
     parser.add_argument('--task', type=str, default='dev', help='dev or train?')
     parser.add_argument('--epochs', type=int, default=50)
     parser.add_argument('--log', type=str, default='logs/exp0.txt')
+    parser.add_argument('--num_hid', type=int, default=512)
+    parser.add_argument('--model', type=str, default='baseline0')
     # parser.add_argument('--lr', type=float, default=1e-3)
     # parser.add_argument('--batch_size', type=int, default=20)
     # parser.add_argument('--dropout', type=float, default=0.2)
@@ -44,7 +46,12 @@ if __name__ == '__main__':
         batch_size = 512
 
     logger = utils.Logger(args.log)
-    model = base_model.build_baseline0(train_dset).cuda()
+    if args.model == 'baseline0':
+        model = base_model.build_baseline0(train_dset).cuda()
+    elif args.model == 'baseline0_bidirect':
+        model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
+    else:
+        assert False, 'invalid'
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
