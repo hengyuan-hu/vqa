@@ -17,6 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type=str, default='dev', help='dev or train?')
     parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--log', type=str, default='logs/exp0.txt')
     # parser.add_argument('--lr', type=float, default=1e-3)
     # parser.add_argument('--batch_size', type=int, default=20)
     # parser.add_argument('--dropout', type=float, default=0.2)
@@ -42,8 +43,9 @@ if __name__ == '__main__':
         eval_dset = VQAFeatureDataset('val', dictionary)
         batch_size = 512
 
+    logger = utils.Logger(args.log)
     model = base_model.build_baseline0(train_dset).cuda()
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
-    train(model, train_dset, eval_dset, args.epochs, batch_size)
+    train(model, train_dset, eval_dset, args.epochs, batch_size, logger)

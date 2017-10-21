@@ -1,10 +1,9 @@
 import time
-
 import torch
 from torch.autograd import Variable
 
 
-def train(model, train_dset, eval_dset, num_epochs, batch_size):
+def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
     # optim = torch.optim.Adadelta(model.parameters())
     optim = torch.optim.Adam(model.parameters())
 
@@ -27,17 +26,17 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size):
             total_loss += loss.data[0] * v.size(0)
 
         total_loss /= len(train_dset)
-        print 'epoch %d, loss: %.2f, time: %.2f' % (epoch, total_loss, time.time() - t)
-        evaluate(model, eval_dset)
+        score, upper_bound = evaluate(model, eval_dset)
+
+        print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
+        print logger.log('train_loss: %.2f, eval_score: %.2f (%.2f)'
+                         % (total_loss, score, upper_bound))
 
 
 def evaluate(model, eval_dset):
+    model.train(False)
 
-    dataloader = torch.utils.data.DataLoader(
-        eval_dset, batch_size=1000, shuffle=True, num_workers=4, drop_last=False)
-
-    total_loss = 0
-    t = time.time()
+    dataloader = torch.utils.data.DataLoader(eval_dset, 1000, num_workers=4)
     score = 0
     upper_bound = 0
     for i, (v, q, a) in enumerate(dataloader):
@@ -52,5 +51,8 @@ def evaluate(model, eval_dset):
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()
 
-    print 'acc: %.2f' % (100.0 * score / len(eval_dset))
-    print 'upper bound: %.2f' % (100.0 * upper_bound / len(eval_dset))
+    model.train(True)
+
+    score = 100.0 * score / len(eval_dset)
+    upper_bound = 100.0 * upper_bound / len(eval_dset)
+    return score, upper_bound
