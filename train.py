@@ -32,7 +32,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size):
 
 
 def evaluate(model, eval_dset):
-
+    model.train(False)
     dataloader = torch.utils.data.DataLoader(
         eval_dset, batch_size=1000, shuffle=True, num_workers=4, drop_last=False)
 
@@ -54,3 +54,4 @@ def evaluate(model, eval_dset):
 
     print 'acc: %.2f' % (100.0 * score / len(eval_dset))
     print 'upper bound: %.2f' % (100.0 * upper_bound / len(eval_dset))
+    model.train(True)
