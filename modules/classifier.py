@@ -9,6 +9,7 @@ class SimpleClassifier(nn.Module):
         super(SimpleClassifier, self).__init__()
         layers = [
             GatedTanh(in_dim, hid_dim),
+            nn.Dropout(0.5, inplace=True),
             weight_norm(nn.Linear(hid_dim, out_dim), dim=None)
         ]
         self.main = nn.Sequential(*layers)
