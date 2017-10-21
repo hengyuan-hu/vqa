@@ -40,10 +40,16 @@ if __name__ == '__main__':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
         batch_size = 100
-    else:
+    elif args.task == 'dev2':
+        train_dset = VQAFeatureDataset('val', dictionary)
+        eval_dset = train_dset
+        batch_size = 512
+    elif args.task == 'train':
         train_dset = VQAFeatureDataset('train', dictionary)
         eval_dset = VQAFeatureDataset('val', dictionary)
         batch_size = 512
+    else:
+        assert False, args.task
 
     logger = utils.Logger(args.log)
     if args.model == 'baseline0':
