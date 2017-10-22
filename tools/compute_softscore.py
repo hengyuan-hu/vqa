@@ -78,6 +78,19 @@ punct        = [';', r"/", '[', ']', '"', '{', '}',
                      '>', '<', '@', '`', ',', '?', '!']
 
 
+def get_score(occurences):
+    if occurences == 0:
+        return 0
+    elif occurences == 1:
+        return 0.3
+    elif occurences == 2:
+        return 0.6333333333333333
+    elif occurences == 3:
+        return 0.9666666666666666
+    else:
+        return 1
+
+
 def processPunctuation(inText):
     outText = inText
     for p in punct:
@@ -182,8 +195,8 @@ def compute_target(answers_dset, ans2label, name, cache_root='data/cache'):
             if answer not in ans2label:
                 continue
             labels.append(ans2label[answer])
-            count = float(min(answer_count[answer], 3))
-            scores.append(count / 3.0)
+            score = get_score(answer_count[answer])
+            scores.append(score)
 
         target.append({
             'question_id': ans_entry['question_id'],
