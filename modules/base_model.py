@@ -56,5 +56,5 @@ def build_baseline0_bidirect(dataset, num_hid):
     v_attention = TopDownAttention(q_emb.nhid * 2, dataset.v_dim, num_hid)
     q_net = GatedTanh(q_emb.nhid * 2, num_hid)
     v_net = GatedTanh(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, 1024, dataset.num_ans_candidates)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
