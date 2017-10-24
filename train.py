@@ -5,7 +5,8 @@ from torch.autograd import Variable
 
 def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
     # optim = torch.optim.Adadelta(model.parameters())
-    optim = torch.optim.Adam(model.parameters())
+    # optim = torch.optim.Adam(model.parameters())
+    optim = torch.optim.Adamax(model.parameters())
 
     for epoch in range(num_epochs):
         dataloader = torch.utils.data.DataLoader(
