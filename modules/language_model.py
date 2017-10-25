@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-# import utils
 
 
 class QuestionEmbedding(nn.Module):
@@ -14,7 +13,6 @@ class QuestionEmbedding(nn.Module):
         """
         super(QuestionEmbedding, self).__init__()
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
-        # TODO: dropout?
         self.rnn = nn.GRU(emb_dim, nhid, nlayers, bidirectional=bidirect)
 
         self.ntoken = ntoken
@@ -22,7 +20,6 @@ class QuestionEmbedding(nn.Module):
         self.nhid = nhid
         self.nlayers = nlayers
         self.rnn_type = rnn_type
-        # self.bidirect = bidirect
         self.ndirections = 1 + int(bidirect)
 
     def init_embedding(self, np_file):
@@ -41,7 +38,8 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(*hid_shape).zero_())
 
     def forward(self, x):
-        batch = x.size(1) # x: [sequence_length, batch]
+        # x: [sequence_length, batch]
+        batch = x.size(1)
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
         # emb: [sequence, batch, emb_dim]
@@ -52,8 +50,6 @@ class QuestionEmbedding(nn.Module):
             forward_ = output[-1][:, :self.nhid]
             backward = output[0][:, self.nhid:]
             emb = torch.cat((forward_, backward), dim=1)
-            # print forward_.size()
-            # print backward.size()
         return emb
 
 
