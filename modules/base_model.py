@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from top_down_attention import TopDownAttention
 from language_model import QuestionEmbedding
-from gated_tanh import GatedTanh
+from glu import GLU
 from classifier import SimpleClassifier
 
 
@@ -36,16 +36,24 @@ class BaseModel(nn.Module):
 
         v_emb = self.v_attention(v, q_emb).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
-        # v_repr = 1
-        # assert q_repr.size() == v_repr.size()
         joint_repr = q_repr * v_repr
         return joint_repr
 
 
-def build_baseline0(dataset):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, 512, 1)
-    v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, 512)
-    q_net = GatedTanh(q_emb.nhid, 512)
-    v_net = GatedTanh(dataset.v_dim, 512)
-    classifier = SimpleClassifier(512, 1024, dataset.num_ans_candidates)
+def build_baseline0(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
+    v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
+    q_net = GLU(q_emb.nhid, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
+
+
+# Not very useful
+def build_baseline0_bidirect(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, True)
+    v_attention = TopDownAttention(q_emb.nhid * 2, dataset.v_dim, num_hid)
+    q_net = GLU(q_emb.nhid * 2, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_attention, q_net, v_net, classifier)

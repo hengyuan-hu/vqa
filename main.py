@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
-# from modules.language_model import RNNModel
 from modules import base_model
 from train import train
 import utils
@@ -16,8 +15,10 @@ import utils
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type=str, default='dev', help='dev or train?')
-    parser.add_argument('--epochs', type=int, default=50)
+    parser.add_argument('--epochs', type=int, default=30)
     parser.add_argument('--log', type=str, default='logs/exp0.txt')
+    parser.add_argument('--num_hid', type=int, default=512)
+    parser.add_argument('--model', type=str, default='baseline0')
     # parser.add_argument('--lr', type=float, default=1e-3)
     # parser.add_argument('--batch_size', type=int, default=20)
     # parser.add_argument('--dropout', type=float, default=0.2)
@@ -38,13 +39,25 @@ if __name__ == '__main__':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
         batch_size = 100
-    else:
+        args.epochs = 50
+    elif args.task == 'dev2':
+        train_dset = VQAFeatureDataset('val', dictionary)
+        eval_dset = train_dset
+        batch_size = 512
+    elif args.task == 'train':
         train_dset = VQAFeatureDataset('train', dictionary)
         eval_dset = VQAFeatureDataset('val', dictionary)
         batch_size = 512
+    else:
+        assert False, args.task
 
     logger = utils.Logger(args.log)
-    model = base_model.build_baseline0(train_dset).cuda()
+    if args.model == 'baseline0':
+        model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
+    elif args.model == 'baseline0_bidirect':
+        model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
+    else:
+        assert False, 'invalid'
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
