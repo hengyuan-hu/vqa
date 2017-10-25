@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
-# from modules.language_model import RNNModel
 from modules import base_model
 from train import train
 import utils
