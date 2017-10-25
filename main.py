@@ -7,7 +7,6 @@ from torch.autograd import Variable
 import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
-# from modules.language_model import RNNModel
 from modules import base_model
 from train import train
 import utils
@@ -40,6 +39,7 @@ if __name__ == '__main__':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
         batch_size = 100
+        args.epochs = 50
     elif args.task == 'dev2':
         train_dset = VQAFeatureDataset('val', dictionary)
         eval_dset = train_dset
