@@ -4,6 +4,7 @@ from top_down_attention import TopDownAttention
 from language_model import QuestionEmbedding
 from glu import GLU
 from classifier import SimpleClassifier
+from ram import RAM
 
 
 class BaseModel(nn.Module):
@@ -57,3 +58,20 @@ def build_baseline0_bidirect(dataset, num_hid):
     v_net = GLU(dataset.v_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
+
+
+def build_ram0(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
+    q_net = GLU(q_emb.nhid, num_hid)
+
+    rnet_in_dim = dataset.v_dim * 2 + num_hid
+    r_net = nn.Sequential(
+        GLU(rnet_in_dim, dataset.v_dim),
+        # GLU(dataset.v_dim, dataset.v_dim)
+    )
+    v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
+    ram = RAM(v_attention, r_net)
+
+    v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(q_emb, ram, q_net, v_net, classifier)

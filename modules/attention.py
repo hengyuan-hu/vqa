@@ -39,6 +39,22 @@ class Attention(nn.Module):
     out = objects * weights
     return out
 
+  def logits(self, inputs):
+    """return the pre-softmax attention weights.
+
+    inputs: [batch, num_objs, in_dim]
+
+    return: [batch, num_objs]
+    """
+    batch_size, num_objects, _ = inputs.size()
+
+    inputs = inputs.view(batch_size * num_objects, -1)
+    x = self.nonlinear(inputs)
+    x = self.linear(x)
+    x = x.view(batch_size, num_objects)
+    return x
+
+
 
 if __name__ == '__main__':
   import torch

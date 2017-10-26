@@ -25,3 +25,10 @@ class TopDownAttention(Attention):
     inputs = torch.cat((v, q), 2)
 
     return super(TopDownAttention, self).forward(inputs, v)
+
+  def logits(self, v, q):
+    batch, num_feat, _ = v.size()
+    q = q.unsqueeze(1).expand(batch, num_feat, self.q_dim)
+    inputs = torch.cat((v, q), 2)
+
+    return super(TopDownAttention, self).logits(inputs)
