@@ -12,8 +12,11 @@ class QuestionEmbedding(nn.Module):
         with the definition in Dictionary.
         """
         super(QuestionEmbedding, self).__init__()
+        assert rnn_type == 'LSTM' or rnn_type == 'GRU'
+        rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
+
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
-        self.rnn = nn.GRU(emb_dim, nhid, nlayers, bidirectional=bidirect)
+        self.rnn = rnn_cls(emb_dim, nhid, nlayers, bidirectional=bidirect)
 
         self.ntoken = ntoken
         self.emb_dim = emb_dim
@@ -46,10 +49,10 @@ class QuestionEmbedding(nn.Module):
         output, hidden = self.rnn(emb, hidden)
         if self.ndirections == 1:
             return output[-1]
-        else:
-            forward_ = output[-1][:, :self.nhid]
-            backward = output[0][:, self.nhid:]
-            emb = torch.cat((forward_, backward), dim=1)
+
+        forward_ = output[-1][:, :self.nhid]
+        backward = output[0][:, self.nhid:]
+        emb = torch.cat((forward_, backward), dim=1)
         return emb
 
     def forward_allout(self, x):
