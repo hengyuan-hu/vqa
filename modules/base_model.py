@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from top_down_attention import TopDownAttention
+from relational_attention import RelationalAttention
 from language_model import QuestionEmbedding
 from glu import GLU
 from classifier import SimpleClassifier
@@ -45,6 +46,15 @@ def build_baseline0(dataset, num_hid):
     v_attention = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
     q_net = GLU(q_emb.nhid, num_hid)
     v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
+
+
+def build_relational_attention(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
+    v_attention = RelationalAttention(dataset.v_dim, q_emb.nhid, h=num_hid)
+    q_net = GLU(q_emb.nhid, num_hid)
+    v_net = GLU(num_hid, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_attention, q_net, v_net, classifier)
 

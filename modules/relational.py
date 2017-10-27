@@ -1,18 +1,19 @@
 import torch
 import torch.nn as nn
 from glu import GLU
+from torch.nn.utils.weight_norm import weight_norm
 
 class RelationalNet(nn.Module):
 
-    def __init__(self, v_len, q_len, output_len, h=1024, num_layers=4):
+    def __init__(self, v_len, q_len, output_len, h=1024, num_layers=1):
         super(RelationalNet, self).__init__()
 
-        layers = [nn.Linear(v_len * 2 + q_len, h), GLU(h, h)]
+        layers = [weight_norm(nn.Linear(v_len * 2 + q_len, h)), GLU(h, h)]
 
         for i in xrange(num_layers - 1):
-            layers += [nn.Linear(h, h), GLU(h, h)]
+            layers += [weight_norm(nn.Linear(h, h)), GLU(h, h)]
 
-        layers += [nn.Linear(h, output_len)]
+        layers += [weight_norm(nn.Linear(h, output_len))]
         self.g = nn.Sequential(*layers)
 
 

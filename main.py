@@ -20,7 +20,8 @@ def parse_args():
     parser.add_argument('--num_hid', type=int, default=512)
     parser.add_argument('--model', type=str, default='baseline0')
     # parser.add_argument('--lr', type=float, default=1e-3)
-    # parser.add_argument('--batch_size', type=int, default=20)
+    parser.add_argument('--batch_size', type=int, default=512)
+    parser.add_argument('--eval_batch_size', type=int, default=512)
     # parser.add_argument('--dropout', type=float, default=0.2)
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
     args = parser.parse_args()
@@ -38,16 +39,15 @@ if __name__ == '__main__':
     if args.task == 'dev':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
-        batch_size = 100
+        args.batch_size = 100
+        args.eval_batch_size = 100
         args.epochs = 50
     elif args.task == 'dev2':
         train_dset = VQAFeatureDataset('val', dictionary)
         eval_dset = train_dset
-        batch_size = 512
     elif args.task == 'train':
         train_dset = VQAFeatureDataset('train', dictionary)
         eval_dset = VQAFeatureDataset('val', dictionary)
-        batch_size = 512
     else:
         assert False, args.task
 
@@ -56,9 +56,11 @@ if __name__ == '__main__':
         model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline0_bidirect':
         model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
+    elif args.model == 'relational_attention':
+        model = base_model.build_relational_attention(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
-    train(model, train_dset, eval_dset, args.epochs, batch_size, logger)
+    train(model, train_dset, eval_dset, args.epochs, args.batch_size, args.eval_batch_size, logger)
