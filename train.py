@@ -1,6 +1,10 @@
 import time
 import torch
+import torch.nn as nn
 from torch.autograd import Variable
+
+def grad_clamp(parameters, clip=25):
+    nn.utils.clip_grad_norm(parameters, clip)
 
 
 def train(model, train_dset, eval_dset, num_epochs, batch_size, eval_batch_size, logger):
@@ -21,6 +25,8 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, eval_batch_size,
             loss = model.loss(v, q, a)
 
             loss.backward()
+
+            grad_clamp(model.parameters())
             optim.step()
             optim.zero_grad()
 
