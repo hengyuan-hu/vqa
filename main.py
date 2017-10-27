@@ -10,6 +10,7 @@ from dataset import Dictionary, VQAFeatureDataset
 from modules import base_model
 from modules import ram_model
 from modules import reatt
+from modules import rnn_model
 from train import train
 import utils
 
@@ -66,6 +67,8 @@ if __name__ == '__main__':
         model = reatt.build_reatt0(train_dset, args.num_hid).cuda()
     elif args.model == 'reatt2':
         model = reatt.build_reatt2(train_dset, args.num_hid).cuda()
+    elif args.model == 'rnn0':
+        model = rnn_model.build_rnn0(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
     # seems not necessary
