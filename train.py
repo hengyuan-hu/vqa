@@ -22,7 +22,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
             loss = model.loss(v, q, a)
 
             loss.backward()
-            # torch.nn.utils.clip_grad_norm(model.parameters(), 0.25)
+            torch.nn.utils.clip_grad_norm(model.parameters(), 0.25)
 
             optim.step()
             optim.zero_grad()

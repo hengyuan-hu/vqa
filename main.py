@@ -9,6 +9,7 @@ import numpy as np
 from dataset import Dictionary, VQAFeatureDataset
 from modules import base_model
 from modules import ram_model
+from modules import reatt
 from train import train
 import utils
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     elif args.task == 'train':
         train_dset = VQAFeatureDataset('train', dictionary)
         eval_dset = VQAFeatureDataset('val', dictionary)
-        batch_size = 256 # 512
+        batch_size = 512
     else:
         assert False, args.task
 
@@ -58,8 +59,11 @@ if __name__ == '__main__':
     elif args.model == 'baseline0_bidirect':
         model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
     elif args.model == 'ram0':
-        # model = base_model.build_ram0(train_dset, args.num_hid).cuda()
         model = ram_model.build_ram0(train_dset, args.num_hid).cuda()
+    elif args.model == 'reatt0':
+        model = reatt.build_reatt0(train_dset, args.num_hid).cuda()
+    elif args.model == 'reatt2':
+        model = reatt.build_reatt2(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
     # seems not necessary

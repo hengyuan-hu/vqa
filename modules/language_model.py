@@ -52,6 +52,16 @@ class QuestionEmbedding(nn.Module):
             emb = torch.cat((forward_, backward), dim=1)
         return emb
 
+    def forward_allout(self, x):
+        assert self.ndirections == 1, 'bidirection not supported yet'
+        batch = x.size(1)
+        hidden = self.init_hidden(batch)
+        emb = self.emb(x)
+        # emb: [sequence, batch, emb_dim]
+        output, hidden = self.rnn(emb, hidden)
+        return output
+
+
 
 if __name__ == '__main__':
     import os, sys
