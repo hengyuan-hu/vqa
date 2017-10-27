@@ -2,34 +2,11 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
-
 from glu import GLU
 
 
 _FLOAT32_MAX = np.finfo(np.float32).max
 _HALF_LOG_MAX = float(np.log(_FLOAT32_MAX) / 2)
-
-
-def log_sum_exp(logs, dim, keepdim):
-    """Compute the log(sum(exp(x))) along axis specified by dim.
-
-    NOTE: this won't reduce any dim
-    """
-
-    alpha = logs.max(dim, keepdim=True)[0] - _HALF_LOG_MAX
-    logs = logs - alpha.expand_as(logs)
-    if not keepdim:
-        alpha = alpha.squeeze(dim)
-    ls = alpha + torch.log(torch.sum(torch.exp(logs), dim, keepdim))
-    return ls
-
-
-def softmax(x, dim):
-    a = x.max(dim, keepdim=True)[0] - _HALF_LOG_MAX
-    x = x - a.expand_as(x)
-    exp_x = torch.exp(x)
-    sum_exp = exp_x.sum(dim, keepdim=True).expand_as(exp_x)
-    return exp_x / sum_exp
 
 
 def compute_relative_attention(w_logits, batch, num_objs):
