@@ -48,6 +48,7 @@ class QuestionEmbedding(nn.Module):
         # print x.size()
         emb = self.emb(x)
         # emb: [batch, sequence, emb_dim]
+        self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
         if self.ndirections == 1:
             return output[:, -1]

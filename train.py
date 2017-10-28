@@ -45,7 +45,7 @@ def evaluate(model, eval_dset):
     upper_bound = 0
     for i, (v, q, a) in enumerate(dataloader):
         v = Variable(v.cuda(), volatile=True)
-        q = Variable(q.t().cuda(), volatile=True)
+        q = Variable(q.cuda(), volatile=True)
         pred = model(v, q, None)
         pred = torch.max(pred, 1)[1].data # argmax
         one_hot = torch.zeros(*a.size()).cuda()

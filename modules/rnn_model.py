@@ -47,6 +47,7 @@ class RNNFusion(nn.Module):
             x = torch.cat([q, v], 2)
 
         hidden = self.init_hidden(batch)
+        self.rnn.flatten_parameters()
         output, hidden = self.rnn(x, hidden)
         if self.ndirections == 2:
             output = output[:, :, :self.nhid] + output[:, :, self.nhid:]
