@@ -29,7 +29,7 @@ class Attention(nn.Module):
 
     return    [batch_size, num_objects, obj_dim]
     '''
-    assert inputs.size()[:2] == objects.size()[:2]
+    # assert inputs.size()[:2] == objects.size()[:2]
     batch_size, num_objects, _ = inputs.size()
 
     inputs = inputs.view(batch_size * num_objects, -1)

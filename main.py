@@ -73,7 +73,10 @@ if __name__ == '__main__':
         model = rnn_model.build_rnn0(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
+
     # seems not necessary
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
+
+    model = nn.DataParallel(model).cuda()
     train(model, train_dset, eval_dset, args.epochs, batch_size, logger)

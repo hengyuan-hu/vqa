@@ -44,6 +44,7 @@ class QuestionEmbedding(nn.Module):
         # x: [sequence_length, batch]
         batch = x.size(1)
         hidden = self.init_hidden(batch)
+        print x.size()
         emb = self.emb(x)
         # emb: [sequence, batch, emb_dim]
         output, hidden = self.rnn(emb, hidden)

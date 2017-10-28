@@ -48,6 +48,8 @@ class RNNFusion(nn.Module):
 
         hidden = self.init_hidden(batch)
         output, hidden = self.rnn(x, hidden)
+        if self.ndirections == 2:
+            output = output[:, :, :self.nhid] + output[:, :, self.nhid:]
         return output
 
 
@@ -61,15 +63,19 @@ class RNNModel0(nn.Module):
         self.v_net = v_net
         self.classifier = classifier
 
-    def forward(self, v, q):
+    def forward(self, v, q, labels):
         """Forward
 
         v: [batch_size, num_objs, obj_dim]
         q: [sentence_length, batch_size]
         """
         joint_repr = self._forward(v, q)
-        pred = self.classifier(joint_repr)
-        return pred
+        if self.training:
+            loss = self.classifier.loss(joint_repr, labels)
+            return loss
+        else:
+            pred = self.classifier(joint_repr)
+            return pred
 
     def loss(self, v, q, labels):
         joint_repr = self._forward(v, q)
@@ -78,7 +84,8 @@ class RNNModel0(nn.Module):
 
     def _forward(self, v, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
-        v = self.rnn(v, None)
+        v_res = self.rnn(v, None)
+        v = v + v_res
         # print v.size()
         v_emb = self.v_att(v, q_emb).sum(1) # [batch, v_dim]
 
@@ -91,8 +98,8 @@ class RNNModel0(nn.Module):
 def build_rnn0(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
     v_rnn = RNNFusion(0, dataset.v_dim, dataset.v_dim, 1, True, 'GRU')
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim*2, num_hid)
+    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
     q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim*2, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return RNNModel0(q_emb, v_rnn, v_att, q_net, v_net, classifier)
