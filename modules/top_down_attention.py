@@ -8,8 +8,8 @@ class TopDownAttention(Attention):
   question embedding.
   '''
 
-  def __init__(self, q_dim, v_dim, hidden_dim):
-    super(TopDownAttention, self).__init__(q_dim + v_dim, hidden_dim)
+  def __init__(self, q_dim, v_dim, hidden_dim, num_layers=1):
+    super(TopDownAttention, self).__init__(q_dim + v_dim, hidden_dim, num_layers)
     self.q_dim = q_dim
 
   def forward(self, v, q):

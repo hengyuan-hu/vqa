@@ -59,6 +59,8 @@ if __name__ == '__main__':
         model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline1':
         model = base_model.build_baseline1(train_dset, args.num_hid).cuda()
+    elif args.model == 'baseline2':
+        model = base_model.build_baseline2(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline0_bidirect':
         model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
     elif args.model == 'ram0':

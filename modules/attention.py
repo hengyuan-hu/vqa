@@ -9,10 +9,14 @@ class Attention(nn.Module):
   over a set of objects.
   '''
 
-  def __init__(self, in_dim, hidden_dim):
+  def __init__(self, in_dim, hidden_dim, num_layers):
     super(Attention, self).__init__()
 
-    self.nonlinear = GLU(in_dim, hidden_dim)
+    layers = [GLU(in_dim, hidden_dim)]
+    for i in range(1, num_layers):
+      layers.append(GLU(hidden_dim, hidden_dim))
+
+    self.nonlinear = nn.Sequential(*layers)
     self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)
 
   def forward(self, inputs, objects):
