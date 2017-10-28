@@ -17,7 +17,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
         for i, (v, q, a) in enumerate(dataloader):
             # print i
             v = Variable(v.cuda())
-            q = Variable(q.t().cuda())
+            q = Variable(q.cuda())
             a = Variable(a.cuda())
             loss = model(v, q, a)
 

@@ -41,7 +41,8 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(*hid_shape).zero_())
 
     def forward(self, x):
-        # x: [sequence_length, batch]
+        # x: [batch, sequence_length]
+        x = x.t()
         batch = x.size(1)
         hidden = self.init_hidden(batch)
         print x.size()
