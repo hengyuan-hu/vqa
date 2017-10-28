@@ -19,7 +19,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
             v = Variable(v.cuda())
             q = Variable(q.cuda())
             a = Variable(a.cuda())
-            loss = model(v, q, a)
+            loss = model(v, q, a).mean()
 
             loss.backward()
             torch.nn.utils.clip_grad_norm(model.parameters(), 0.25)
