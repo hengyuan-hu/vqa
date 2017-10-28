@@ -49,23 +49,7 @@ class RAM(nn.Module):
         return v
 
     def forward(self, v, q):
-        # print 'in ram forward: v', v.mean().data[0]
-        # print 'in ram forward: q', q.mean().data[0]
         batch, num_objs, v_dim = v.size()
-        # w_logits = self.v_att.logits(v, q)
-        # norms, w = compute_ratio(w_logits)#.unsqueeze(2)
-        # norms = norms.unsqueeze(2)
-        # w = w.unsqueeze(2)
-        # # print w.size()
-        # # print v.size()
-        # # w = nn.functional.softmax(w_logits).unsqueeze(2)
-
-        # weighted_v = w * v
-        # sum_v = weighted_v.sum(1, keepdim=True)
-        # norms += 1
-        # # print norms.min()
-        # v_neg = (sum_v - weighted_v) / norms
-
         v_neg = self.forward2(v, q)
 
         q = q.unsqueeze(1).repeat(1, num_objs, 1)
@@ -84,19 +68,12 @@ def compute_ratio(w_logits):
     w_logits : [batch, num_objs]
     return   : [batch, num_objs]
     """
-    # print w_logits.size()
-    # print w_logits.mean()
-    # print w_logits.max(1)
     a = w_logits.max() - _HALF_LOG_MAX
     w_logits = w_logits - a
     exp_w = torch.exp(w_logits)
 
     sum_exp = exp_w.sum(1, keepdim=True)
     partial_sum_exp = sum_exp - exp_w
-    # sum_exp = Variable(sum_exp.data)
-    # ratio = sum_exp / partial_sum_exp
-    # print ratio.mean()
-    # w = exp_w # / sum_exp
     return partial_sum_exp, exp_w
 
 

@@ -16,15 +16,19 @@ class BaseModel(nn.Module):
         self.v_net = v_net
         self.classifier = classifier
 
-    def forward(self, v, q):
+    def forward(self, v, q, labels):
         """Forward
 
         v: [batch_size, num_objs, obj_dim]
         q: [sentence_length, batch_size]
         """
         joint_repr = self._forward(v, q)
-        pred = self.classifier(joint_repr)
-        return pred
+        if self.training:
+            loss = self.classifier.loss(joint_repr, labels)
+            return loss
+        else:
+            pred = self.classifier(joint_repr)
+            return pred
 
     def loss(self, v, q, labels):
         joint_repr = self._forward(v, q)

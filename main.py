@@ -41,7 +41,7 @@ if __name__ == '__main__':
     if args.task == 'dev':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
-        batch_size = 512
+        batch_size = 100
         args.epochs = 50
     elif args.task == 'dev2':
         train_dset = VQAFeatureDataset('val', dictionary)
