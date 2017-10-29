@@ -8,11 +8,11 @@ from ram import RAM
 
 
 class RAMModel(nn.Module):
-    def __init__(self, q_emb, r_net, v_net, classifier):
+    def __init__(self, q_emb, r_net, q_net, v_net, classifier):
         super(RAMModel, self).__init__()
         self.q_emb = q_emb
         self.r_net = r_net
-        # self.q_net = q_net
+        self.q_net = q_net
         self.v_net = v_net
         self.classifier = classifier
 
@@ -46,6 +46,7 @@ class RAMModel(nn.Module):
 
 def build_ram0(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
+    q_net = GLU(q_emb.nhid, num_hid)
 
     rnet_in_dim = dataset.v_dim * 2 + num_hid
     r_net = nn.Sequential(
@@ -57,4 +58,4 @@ def build_ram0(dataset, num_hid):
 
     v_net = GLU(dataset.v_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return RAMModel(q_emb, ram, v_net, classifier)
+    return RAMModel(q_emb, ram, q_net, v_net, classifier)
