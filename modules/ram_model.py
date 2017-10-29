@@ -8,10 +8,10 @@ from ram import RAM
 
 
 class RAMModel(nn.Module):
-    def __init__(self, q_emb, rnet, v_net, classifier):
+    def __init__(self, q_emb, r_net, v_net, classifier):
         super(RAMModel, self).__init__()
         self.q_emb = q_emb
-        self.rnet = rnet
+        self.r_net = r_net
         # self.q_net = q_net
         self.v_net = v_net
         self.classifier = classifier
@@ -35,11 +35,13 @@ class RAMModel(nn.Module):
 
     def _forward(self, v, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
-        # q_repr = self.q_net(q_emb)
+        q_repr = self.q_net(q_emb)
 
-        v_emb = self.rnet(v, q_emb).sum(1) # [batch, v_dim]
+        v_emb = self.r_net(v, q_emb).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
-        return v_repr
+
+        joint_repr = q_repr * v_repr
+        return joint_repr
 
 
 def build_ram0(dataset, num_hid):
