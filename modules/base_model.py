@@ -76,6 +76,7 @@ class GateInputModel(nn.Module):
 
     def _forward(self, v, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
+        print q_emb.size()
         q_repr = self.q_net(q_emb)
 
         batch, k, v_dim = v.size()

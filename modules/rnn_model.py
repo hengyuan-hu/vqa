@@ -22,6 +22,8 @@ class RNNFusion(nn.Module):
         self.rnn_type = rnn_type
         self.ndirections = 1 + int(bidirect)
 
+        self.fc = GLU(self.ndirections * self.nhid, self.nhid)
+
     def init_hidden(self, batch):
         # just to get the type of tensor
         weight = next(self.parameters()).data
@@ -49,8 +51,13 @@ class RNNFusion(nn.Module):
         hidden = self.init_hidden(batch)
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(x, hidden)
-        if self.ndirections == 2:
-            output = output[:, :, :self.nhid] + output[:, :, self.nhid:]
+
+        # output: [batch, k, nhid * num_directions]
+        output = output.contiguous()
+        output = output.view(batch*k, -1)
+        output = self.fc(output).view(batch, k, -1)
+        # if self.ndirections == 2:
+        #     output = output[:, :, :self.nhid] + output[:, :, self.nhid:]
         return output
 
 
