@@ -64,6 +64,7 @@ class QuestionEmbedding(nn.Module):
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
         # emb: [sequence, batch, emb_dim]
+        self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
         return output
 
