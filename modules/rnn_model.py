@@ -5,7 +5,6 @@ from top_down_attention import TopDownAttention
 from language_model import QuestionEmbedding
 from glu import GLU
 from classifier import SimpleClassifier
-# from ram import RAM
 
 
 class RNNFusion(nn.Module):

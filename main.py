@@ -11,6 +11,7 @@ from modules import base_model
 from modules import ram_model
 from modules import reatt
 from modules import rnn_model
+from modules import enc_dec
 from train import train
 import utils
 
@@ -72,6 +73,8 @@ if __name__ == '__main__':
         model = rnn_model.build_rnn0(train_dset, args.num_hid).cuda()
     elif args.model == 'gateinput0':
         model = base_model.build_gateinput0(train_dset, args.num_hid).cuda()
+    elif args.model == 'efcd':
+        model = enc_dec.build_efcd(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
 
