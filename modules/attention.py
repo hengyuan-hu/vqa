@@ -74,6 +74,39 @@ class Attention(nn.Module):
     return x
 
 
+class SortAttention(Attention):
+    def forward(self, inputs, objects):
+        k = 10
+        batch, num_objects, _ = inputs.size()
+
+        inputs_expand = inputs.view(batch * num_objects, -1)
+        x = self.nonlinear(inputs_expand)
+        x = self.linear(x)
+        w_logits = x.view(batch, num_objects).data
+        _, select = w_logits.topk(k, 1)
+
+        ins = []
+        objs = []
+        for i in range(batch):
+            # print inputs.size()
+            # print inputs[i][select[i]].size()
+            ins.append(inputs[i][select[i]])
+            objs.append(objects[i][select[i]])
+        ins = torch.stack(ins, 0)
+        objs = torch.stack(objs, 0)
+        # print ins.size()
+        # print objs.size()
+
+        ins_expand = ins.view(batch * k, -1)
+        x = self.nonlinear(ins_expand)
+        x = self.linear(x)
+        w_logits = x.view(batch, k).data
+        weights = nn.functional.softmax(w_logits)
+        weights = weights.unsqueeze(2).expand_as(objs)
+        out = objs * weights
+        return out
+
+
 class CrossAttention(nn.Module):
   def __init__(self, q_dim, v_dim, hidden_dim, num_layers):
     super(CrossAttention, self).__init__()
