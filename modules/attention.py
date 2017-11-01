@@ -94,4 +94,4 @@ class NewAttention(nn.Module):
         logits = torch.bmm(v_proj, q_proj).squeeze(2) # [batch, num_feat]
         w = nn.functional.softmax(logits).unsqueeze(2)
 
-        return w * v
+        return w * v_proj
