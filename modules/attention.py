@@ -59,3 +59,39 @@ class Attention(nn.Module):
         x = self.linear(x)
         x = x.view(batch_size, num_objects)
         return x
+
+
+class NewAttention(nn.Module):
+    '''
+    Generic attention modules that computes a soft attention distribution
+    over a set of objects.
+    '''
+
+    def __init__(self, q_dim, v_dim, h_dim):
+        super(NewAttention, self).__init__()
+
+        self.q_dim = q_dim
+        self.v_dim = v_dim
+        self.q_layer = GLU(q_dim, h_dim)
+        self.v_layer = GLU(v_dim, h_dim)
+
+    def forward(self, v, q):
+        '''
+        v      Visual features
+               Dimensions: batch_size x num_features x v_dim
+
+        q      Question embedding
+               Dimensions: batch_size x q_dim
+        '''
+        batch, num_feat, _ = v.size()
+        v_expand = v.view(batch * num_feat, self.v_dim)
+        v_proj = self.v_layer(v_expand) # [batch * num_feat, nhid]
+        q_proj = self.q_layer(q) # [batch, nhid]
+
+        v_proj = v_proj.view(batch, num_feat, -1) # [batch, num_feat, nhid]
+        q_proj = q_proj.unsqueeze(2) # [batch, nhid, 1]
+
+        logits = torch.bmm(v_proj, q_proj).squeeze(2) # [batch, num_feat]
+        w = nn.functional.softmax(logits).unsqueeze(2)
+
+        return w * v

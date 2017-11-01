@@ -53,6 +53,8 @@ if __name__ == '__main__':
 
     if args.model == 'baseline0':
         model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
+    elif args.model == 'baseline0_newatt':
+        model = base_model.build_baseline0_newatt(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline1':
         model = base_model.build_baseline1(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline2':
@@ -66,6 +68,8 @@ if __name__ == '__main__':
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
 
-    model = nn.DataParallel(model).cuda()
+    if args.task == 'train':
+        model = nn.DataParallel(model).cuda()
+
     logger = utils.Logger(args.log)
     train(model, train_dset, eval_dset, args.epochs, batch_size, logger)
