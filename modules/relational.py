@@ -8,10 +8,10 @@ class RelationalNet(nn.Module):
     def __init__(self, v_len, q_len, output_len, h=1024, num_layers=1):
         super(RelationalNet, self).__init__()
 
-        layers = [weight_norm(nn.Linear(v_len * 2 + q_len, h)), GLU(h, h)]
+        layers = [weight_norm(nn.Linear(v_len * 2 + q_len, h)), nn.ReLU()]
 
         for i in xrange(num_layers - 1):
-            layers += [weight_norm(nn.Linear(h, h)), GLU(h, h)]
+            layers += [weight_norm(nn.Linear(h, h)), nn.ReLU()]
 
         layers += [weight_norm(nn.Linear(h, output_len))]
         self.g = nn.Sequential(*layers)

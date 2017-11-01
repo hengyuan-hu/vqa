@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-def grad_clamp(parameters, clip=25):
+def grad_clamp(parameters, clip=5):
     nn.utils.clip_grad_norm(parameters, clip)
 
 
@@ -22,8 +22,8 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, eval_batch_size,
             v = Variable(v.cuda())
             q = Variable(q.t().cuda())
             a = Variable(a.cuda())
-            loss = model.loss(v, q, a)
 
+            loss = model.loss(v, q, a)
             loss.backward()
 
             grad_clamp(model.parameters())
@@ -33,11 +33,12 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, eval_batch_size,
             total_loss += loss.data[0] * v.size(0)
 
         total_loss /= len(train_dset)
+        train_score, train_upper_bound = evaluate(model, train_dset, batch_size)
         score, upper_bound = evaluate(model, eval_dset, eval_batch_size)
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
-        print logger.log('train_loss: %.2f, eval_score: %.2f (%.2f)'
-                         % (total_loss, score, upper_bound))
+        print logger.log('train_loss: %.2f, train_score: %.2f (%.2f), eval_score: %.2f (%.2f)'
+                         % (total_loss, train_score, train_upper_bound, score, upper_bound))
 
 
 def evaluate(model, eval_dset, eval_batch_size):
@@ -46,9 +47,11 @@ def evaluate(model, eval_dset, eval_batch_size):
     dataloader = torch.utils.data.DataLoader(eval_dset, eval_batch_size, num_workers=4)
     score = 0
     upper_bound = 0
+
     for i, (v, q, a) in enumerate(dataloader):
         v = Variable(v.cuda(), volatile=True)
         q = Variable(q.t().cuda(), volatile=True)
+
         pred = model(v, q)
         pred = torch.max(pred, 1)[1].data # argmax
         one_hot = torch.zeros(*a.size()).cuda()
@@ -57,6 +60,7 @@ def evaluate(model, eval_dset, eval_batch_size):
         batch_score = (one_hot * a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()
+
 
     model.train(True)
 

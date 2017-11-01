@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=512)
     parser.add_argument('--eval_batch_size', type=int, default=512)
     # parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--compress', type=int, default=2048, help='compress visual features')
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
     args = parser.parse_args()
     return args
@@ -39,8 +40,8 @@ if __name__ == '__main__':
     if args.task == 'dev':
         train_dset = VQAFeatureDataset('dev', dictionary)
         eval_dset = VQAFeatureDataset('dev', dictionary)
-        args.batch_size = 100
-        args.eval_batch_size = 100
+        args.batch_size = 200
+        args.eval_batch_size = 200
         args.epochs = 50
     elif args.task == 'dev2':
         train_dset = VQAFeatureDataset('val', dictionary)
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     elif args.model == 'baseline0_bidirect':
         model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
     elif args.model == 'relational_attention':
-        model = base_model.build_relational_attention(train_dset, args.num_hid).cuda()
+        model = base_model.build_relational_attention(train_dset, args.num_hid, args.compress).cuda()
     else:
         assert False, 'invalid'
     # seems not necessary
