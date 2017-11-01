@@ -10,17 +10,20 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
 
     for epoch in range(num_epochs):
         dataloader = torch.utils.data.DataLoader(
-            train_dset, batch_size, shuffle=True, num_workers=4)
+            train_dset, batch_size, shuffle=True, num_workers=1)
 
         total_loss = 0
         t = time.time()
         for i, (v, q, a) in enumerate(dataloader):
+            # print i
             v = Variable(v.cuda())
-            q = Variable(q.t().cuda())
+            q = Variable(q.cuda())
             a = Variable(a.cuda())
-            loss = model.loss(v, q, a)
+            loss = model(v, q, a).mean()
 
             loss.backward()
+            torch.nn.utils.clip_grad_norm(model.parameters(), 0.25)
+
             optim.step()
             optim.zero_grad()
 
@@ -37,13 +40,13 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
 def evaluate(model, eval_dset):
     model.train(False)
 
-    dataloader = torch.utils.data.DataLoader(eval_dset, 1000, num_workers=4)
+    dataloader = torch.utils.data.DataLoader(eval_dset, 200, num_workers=1)
     score = 0
     upper_bound = 0
     for i, (v, q, a) in enumerate(dataloader):
         v = Variable(v.cuda(), volatile=True)
-        q = Variable(q.t().cuda(), volatile=True)
-        pred = model(v, q)
+        q = Variable(q.cuda(), volatile=True)
+        pred = model(v, q, None)
         pred = torch.max(pred, 1)[1].data # argmax
         one_hot = torch.zeros(*a.size()).cuda()
         one_hot.scatter_(1, pred.view(-1, 1), 1)

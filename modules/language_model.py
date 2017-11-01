@@ -12,8 +12,12 @@ class QuestionEmbedding(nn.Module):
         with the definition in Dictionary.
         """
         super(QuestionEmbedding, self).__init__()
+        assert rnn_type == 'LSTM' or rnn_type == 'GRU'
+        rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
+
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
-        self.rnn = nn.GRU(emb_dim, nhid, nlayers, bidirectional=bidirect)
+        self.rnn = rnn_cls(
+            emb_dim, nhid, nlayers, bidirectional=bidirect, batch_first=True)
 
         self.ntoken = ntoken
         self.emb_dim = emb_dim
@@ -38,19 +42,32 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(*hid_shape).zero_())
 
     def forward(self, x):
-        # x: [sequence_length, batch]
-        batch = x.size(1)
+        # x: [batch, sequence_length]
+        batch = x.size(0)
+        hidden = self.init_hidden(batch)
+        # print x.size()
+        emb = self.emb(x)
+        # emb: [batch, sequence, emb_dim]
+        self.rnn.flatten_parameters()
+        output, hidden = self.rnn(emb, hidden)
+        if self.ndirections == 1:
+            return output[:, -1]
+
+        forward_ = output[:, -1, :self.nhid]
+        backward = output[:, 0, self.nhid:]
+        emb = torch.cat((forward_, backward), dim=1)
+        return emb
+
+    def forward_allout(self, x):
+        assert self.ndirections == 1, 'bidirection not supported yet'
+        batch = x.size(0)
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
         # emb: [sequence, batch, emb_dim]
+        self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
-        if self.ndirections == 1:
-            return output[-1]
-        else:
-            forward_ = output[-1][:, :self.nhid]
-            backward = output[0][:, self.nhid:]
-            emb = torch.cat((forward_, backward), dim=1)
-        return emb
+        return output
+
 
 
 if __name__ == '__main__':
