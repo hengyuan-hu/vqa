@@ -8,10 +8,6 @@ import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
 from modules import base_model
-from modules import ram_model
-from modules import reatt
-from modules import rnn_model
-from modules import enc_dec
 from train import train
 import utils
 
@@ -57,26 +53,12 @@ if __name__ == '__main__':
 
     if args.model == 'baseline0':
         model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
-    elif args.model == 'baseline0_sort':
-        model = base_model.build_baseline0_sort(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline1':
         model = base_model.build_baseline1(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline2':
         model = base_model.build_baseline2(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline0_bidirect':
         model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
-    elif args.model == 'ram0':
-        model = ram_model.build_ram0(train_dset, args.num_hid).cuda()
-    elif args.model == 'reatt0':
-        model = reatt.build_reatt0(train_dset, args.num_hid).cuda()
-    elif args.model == 'reatt2':
-        model = reatt.build_reatt2(train_dset, args.num_hid).cuda()
-    elif args.model == 'rnn0':
-        model = rnn_model.build_rnn0(train_dset, args.num_hid).cuda()
-    elif args.model == 'gateinput0':
-        model = base_model.build_gateinput0(train_dset, args.num_hid).cuda()
-    elif args.model == 'efcd':
-        model = enc_dec.build_efcd(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
 
