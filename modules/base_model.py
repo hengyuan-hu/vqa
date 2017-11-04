@@ -66,6 +66,16 @@ def build_baseline0_emb_dropout(dataset, num_hid):
 
 def build_baseline0_double_dropout(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False,
+                              emb_dropout=0.2, dropout=0.5)
+    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
+    q_net = GLU(q_emb.nhid, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
+
+
+def build_baseline0_double_dropout2(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False,
                               emb_dropout=0.5, dropout=0.5)
     v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
     q_net = GLU(q_emb.nhid, num_hid)
