@@ -1,6 +1,7 @@
 import time
 import torch
 from torch.autograd import Variable
+import gc
 
 
 def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
@@ -28,6 +29,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
             optim.step()
             optim.zero_grad()
 
+        gc.collect()
         total_loss /= len(train_dset)
         train_score, upper_bound = evaluate(model, train_loader)
         eval_score, _ = evaluate(model, eval_loader)
@@ -42,6 +44,7 @@ def evaluate(model, dataloader):
 
     score = 0
     upper_bound = 0
+    num_data = 0
     for v, b, q, a in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
@@ -54,9 +57,10 @@ def evaluate(model, dataloader):
         batch_score = (one_hot * a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()
+        num_data += pred.size(0)
 
     model.train(True)
 
-    score = 100.0 * score / len(eval_dset)
-    upper_bound = 100.0 * upper_bound / len(eval_dset)
+    score = 100.0 * score / num_data
+    upper_bound = 100.0 * upper_bound / num_data
     return score, upper_bound
