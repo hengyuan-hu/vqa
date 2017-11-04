@@ -46,7 +46,7 @@ def evaluate(model, eval_dset):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()
-        pred = model(v, q, None)
+        pred = model(v, b, q, None)
         pred = torch.max(pred, 1)[1].data # argmax
         one_hot = torch.zeros(*a.size()).cuda()
         one_hot.scatter_(1, pred.view(-1, 1), 1)

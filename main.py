@@ -53,6 +53,8 @@ if __name__ == '__main__':
 
     if args.model == 'baseline0':
         model = base_model.build_baseline0(train_dset, args.num_hid).cuda()
+    elif args.model == 'baseline0_newatt':
+        model = base_model.build_baseline0_newatt(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline1':
         model = base_model.build_baseline1(train_dset, args.num_hid).cuda()
     elif args.model == 'baseline2':

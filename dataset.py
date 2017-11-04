@@ -235,7 +235,7 @@ class VQAFeatureDataset(VQADataset):
 
     def tensorize(self):
         self.features = torch.from_numpy(self.features)
-        self.bboxes = torch.from_numpy(self.bboxes)
+        # self.bboxes = torch.from_numpy(self.bboxes)
 
         for entry in self.entries:
             question = torch.from_numpy(np.array(entry['q_token']))
@@ -257,7 +257,8 @@ class VQAFeatureDataset(VQADataset):
         entry = self.entries[index]
 
         features = self.features[entry['image']]
-        bboxes = self.bboxes[entry['image']]
+        # bboxes = self.bboxes[entry['image']]
+        bboxes = torch.rand(4)
         question = entry['q_token']
 
         answer = entry['answer']
