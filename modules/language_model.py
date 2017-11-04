@@ -5,7 +5,8 @@ import numpy as np
 
 
 class QuestionEmbedding(nn.Module):
-    def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect, rnn_type='GRU'):
+    def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect,
+                 dropout=0.0, rnn_type='GRU'):
         """Module for question embedding
 
         The ntoken-th dim is used for padding_idx, which agrees *implicitly*
@@ -17,7 +18,10 @@ class QuestionEmbedding(nn.Module):
 
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
         self.rnn = rnn_cls(
-            emb_dim, nhid, nlayers, bidirectional=bidirect, batch_first=True)
+            emb_dim, nhid, nlayers,
+            bidirectional=bidirect,
+            dropout=dropout,
+            batch_first=True)
 
         self.ntoken = ntoken
         self.emb_dim = emb_dim

@@ -44,6 +44,15 @@ def build_baseline0(dataset, num_hid):
     return BaseModel(q_emb, v_att, q_net, v_net, classifier)
 
 
+def build_baseline0_dropout(dataset, num_hid):
+    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False, 0.5)
+    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
+    q_net = GLU(q_emb.nhid, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
+
+
 def build_baseline0_newatt(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
     v_att = NewAttention(dataset.v_dim, q_emb.nhid)
