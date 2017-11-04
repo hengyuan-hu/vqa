@@ -7,14 +7,15 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
     # optim = torch.optim.Adadelta(model.parameters())
     # optim = torch.optim.Adam(model.parameters())
     optim = torch.optim.Adamax(model.parameters())
+    train_loader = torch.utils.data.DataLoader(
+        train_dset, batch_size, shuffle=True, num_workers=1)
+    eval_loader =  torch.utils.data.DataLoader(
+        eval_dset, batch_size, shuffle=True, num_workers=1)
 
     for epoch in range(num_epochs):
-        dataloader = torch.utils.data.DataLoader(
-            train_dset, batch_size, shuffle=True, num_workers=1)
-
         total_loss = 0
         t = time.time()
-        for i, (v, b, q, a) in enumerate(dataloader):
+        for i, (v, b, q, a) in enumerate(train_loader):
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
@@ -28,21 +29,20 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
             optim.zero_grad()
 
         total_loss /= len(train_dset)
-        train_score, upper_bound = evaluate(model, train_dset)
-        eval_score, _ = evaluate(model, eval_dset)
+        train_score, upper_bound = evaluate(model, train_loader)
+        eval_score, _ = evaluate(model, eval_loader)
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
         print logger.log('train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f)'
                          % (total_loss, train_score, eval_score, upper_bound))
 
 
-def evaluate(model, eval_dset):
+def evaluate(model, dataloader):
     model.train(False)
 
-    dataloader = torch.utils.data.DataLoader(eval_dset, 200, num_workers=1)
     score = 0
     upper_bound = 0
-    for i, (v, b, q, a) in enumerate(dataloader):
+    for v, b, q, a in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()

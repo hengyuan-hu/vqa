@@ -283,8 +283,8 @@ if __name__ == '__main__':
         dset, batch_size=100, shuffle=True, num_workers=4, drop_last=False)
 
     t = time.time()
-    for b, (x, y, z) in enumerate(dataloader):
+    for i, (x, b, y, z) in enumerate(dataloader):
         a = x
-        if b >= len(dataloader):
+        if i >= len(dataloader):
             break
     print('time: %.2f' % (time.time() - t))
