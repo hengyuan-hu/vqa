@@ -59,3 +59,29 @@ class Attention(nn.Module):
         x = self.linear(x)
         x = x.view(batch_size, num_objects)
         return x
+
+
+class NewAttention(nn.Module):
+    '''
+    Generic attention modules that computes a soft attention distribution
+    over a set of objects.
+    '''
+
+    def __init__(self, v_dim, q_dim):
+        super(NewAttention, self).__init__()
+
+        self.v_proj = weight_norm(GLU(v_dim, q_dim), dim=None)
+        self.linear = weight_norm(nn.Linear(q_dim, 1), dim=None)
+
+    def forward(self, v, q):
+        """
+        v: [batch, k, vdim]
+        q: [batch, qdim]
+        """
+        batch, k, vdim = v.size()
+        v_expand = v.view(batch * k, vdim)
+        v_proj = self.v_proj(v) # [batch * k, qdim]
+        q_expand = q.unsqueeze(1).repeat(1, k, 1).view(batch * k, -1)
+        joint_repr = v_proj * q_expand
+        logits = self.linear(joint_repr).view(batch, k)
+        w = nn.functional.softmax(logits)

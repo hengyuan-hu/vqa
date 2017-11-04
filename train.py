@@ -14,27 +14,26 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
 
         total_loss = 0
         t = time.time()
-        for i, (v, q, a) in enumerate(dataloader):
-            # print i
-            v = Variable(v.cuda())
-            q = Variable(q.cuda())
-            a = Variable(a.cuda())
-            loss = model(v, q, a).mean()
+        for i, (v, b, q, a) in enumerate(dataloader):
+            v = Variable(v).cuda()
+            b = Variable(b).cuda()
+            q = Variable(q).cuda()
+            a = Variable(a).cuda()
+            loss = model(v, b, q, a).mean()
+            total_loss += loss.data[0] * v.size(0)
 
             loss.backward()
             torch.nn.utils.clip_grad_norm(model.parameters(), 0.25)
-
             optim.step()
             optim.zero_grad()
 
-            total_loss += loss.data[0] * v.size(0)
-
         total_loss /= len(train_dset)
-        score, upper_bound = evaluate(model, eval_dset)
+        train_score, upper_bound = evaluate(model, train_dset)
+        eval_score, _ = evaluate(model, eval_dset)
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
-        print logger.log('train_loss: %.2f, eval_score: %.2f (%.2f)'
-                         % (total_loss, score, upper_bound))
+        print logger.log('train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f)'
+                         % (total_loss, train_score, eval_score, upper_bound))
 
 
 def evaluate(model, eval_dset):
@@ -43,9 +42,10 @@ def evaluate(model, eval_dset):
     dataloader = torch.utils.data.DataLoader(eval_dset, 200, num_workers=1)
     score = 0
     upper_bound = 0
-    for i, (v, q, a) in enumerate(dataloader):
-        v = Variable(v.cuda(), volatile=True)
-        q = Variable(q.cuda(), volatile=True)
+    for i, (v, b, q, a) in enumerate(dataloader):
+        v = Variable(v, volatile=True).cuda()
+        b = Variable(b, volatile=True).cuda()
+        q = Variable(q, volatile=True).cuda()
         pred = model(v, q, None)
         pred = torch.max(pred, 1)[1].data # argmax
         one_hot = torch.zeros(*a.size()).cuda()
