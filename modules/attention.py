@@ -70,7 +70,8 @@ class NewAttention(nn.Module):
     def __init__(self, v_dim, q_dim):
         super(NewAttention, self).__init__()
 
-        self.v_proj = GLU(v_dim, q_dim)
+        # self.v_proj = GLU(v_dim, q_dim)
+        self.v_proj = weight_norm(nn.Linear(v_dim, q_dim), dim=None)
         self.linear = weight_norm(nn.Linear(q_dim, 1), dim=None)
 
     def forward(self, v, q):
@@ -79,18 +80,12 @@ class NewAttention(nn.Module):
         q: [batch, qdim]
         """
         batch, k, vdim = v.size()
-        # v_expand = v.view(batch * k, vdim)
-        # print v.size()
         v_proj = self.v_proj(v) # [batch * k, qdim]
-        # print v_proj.size()
-        q_expand = q.unsqueeze(1).repeat(1, k, 1)#.view(batch * k, -1)
-        # print v_proj.size(), q_expand.size()
+        q_expand = q.unsqueeze(1).repeat(1, k, 1)
         joint_repr = v_proj * q_expand
+        joint_repr = nn.functional.normalize(joint_repr, 2, 2)
 
-        # print 'where?'
         logits = self.linear(joint_repr).view(batch, k)
         w = nn.functional.softmax(logits).unsqueeze(2).expand_as(v)
-        # print w.size(), v.size()
         out = w * v
-        # print 'warinig?'
         return out
