@@ -51,17 +51,9 @@ if __name__ == '__main__':
     else:
         assert False, args.task
 
+    func_name = 'build_%s' % args.model
     if 'baseline' in args.model:
-        func_name = 'build_%s' % args.model
         model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
-    # elif args.model == 'baseline0_newatt':
-    #     model = base_model.build_baseline0_newatt(train_dset, args.num_hid).cuda()
-    # elif args.model == 'baseline1':
-    #     model = base_model.build_baseline1(train_dset, args.num_hid).cuda()
-    # elif args.model == 'baseline2':
-    #     model = base_model.build_baseline2(train_dset, args.num_hid).cuda()
-    # elif args.model == 'baseline0_bidirect':
-    #     model = base_model.build_baseline0_bidirect(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
 

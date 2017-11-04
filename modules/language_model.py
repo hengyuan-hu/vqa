@@ -6,7 +6,7 @@ import numpy as np
 
 class QuestionEmbedding(nn.Module):
     def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect,
-                 dropout=0.0, rnn_type='GRU'):
+                  emb_dropout=0.0, dropout=0.0, rnn_type='GRU'):
         """Module for question embedding
 
         The ntoken-th dim is used for padding_idx, which agrees *implicitly*
@@ -17,6 +17,8 @@ class QuestionEmbedding(nn.Module):
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
 
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
+        self.emb_dropout = nn.Dropout(emb_dropout)
+
         self.rnn = rnn_cls(
             emb_dim, nhid, nlayers,
             bidirectional=bidirect,
@@ -49,8 +51,8 @@ class QuestionEmbedding(nn.Module):
         # x: [batch, sequence_length]
         batch = x.size(0)
         hidden = self.init_hidden(batch)
-        # print x.size()
         emb = self.emb(x)
+        emb = self.emb_dropout(emb)
         # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
