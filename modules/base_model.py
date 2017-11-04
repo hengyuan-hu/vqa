@@ -22,28 +22,17 @@ class BaseModel(nn.Module):
         v: [batch, num_objs, obj_dim]
         b: [batch, num_objs, b_dim]
         q: [batch_size, seq_length]
+
+        return: logits, not probs
         """
-        joint_repr = self._forward(v, b, q)
-        if self.training:
-            loss = self.classifier.loss(joint_repr, labels)
-            return loss
-        else:
-            pred = self.classifier(joint_repr)
-            return pred
-
-    def loss(self, v, q, labels):
-        joint_repr = self._forward(v, q)
-        loss = self.classifier.loss(joint_repr, labels)
-        return loss
-
-    def _forward(self, v, b, q):
         q_emb = self.q_emb(q) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
 
         v_emb = self.v_att(v, q_emb).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
-        return joint_repr
+        logits = self.classifier(joint_repr)
+        return logits
 
 
 def build_baseline0(dataset, num_hid):
