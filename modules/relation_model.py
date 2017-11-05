@@ -44,7 +44,6 @@ class BaseModel(nn.Module):
         q_joint_emb = torch.cat([q_sementic_emb, q_relation_emb], 1)
         q_repr = self.q_net(q_joint_emb)
 
-
         sementic_att = self.v_att.logits(v, q_sementic_emb).unsqueeze(2) #[batch, k, 1]
         relation_att = self.relation(b, q_relation_emb) # [batch, k, k]
         # relation_att = Variable(torch.eye(relation_att.size(1))).cuda()
