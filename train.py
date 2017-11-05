@@ -59,7 +59,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
         print logger.log(
             'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f)'
-            % (total_loss, 100 * train_score, 100 * eval_score, upper_bound)
+            % (total_loss, 100 * train_score, 100 * eval_score, 100 * upper_bound)
         )
 
 
