@@ -21,40 +21,25 @@ class Attention(nn.Module):
         self.nonlinear = nn.Sequential(*layers)
         self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)
 
-    def forward(self, inputs, objects):
+    def forward(self, inputs):
         '''
-        inputs    Input vector x_i is used to compute weight a_i for object o_i.
-        Dimensions: batch_size x num_objects x in_dim
+        inputs: [batch, num_objs, dim]
 
-        objects   Final output is sum(a_i * o_i) for all objects o_i
-                  Dimensions: batch_size x num_objects x obj_dim
-
-        return    [batch_size, num_objects, obj_dim]
+        return: [batch_size, num_objects]
         '''
-        # assert inputs.size()[:2] == objects.size()[:2]
-        batch_size, num_objects, _ = inputs.size()
-
-        inputs = inputs.view(batch_size * num_objects, -1)
         x = self.nonlinear(inputs)
-        x = self.linear(x)
-        x = x.view(batch_size, num_objects)
-
+        x = self.linear(x).squeeze(2)
         weights = nn.functional.softmax(x)
         return weights
 
     def logits(self, inputs):
         """return the pre-softmax attention weights.
-
         inputs: [batch, num_objs, in_dim]
 
         return: [batch, num_objs]
         """
-        batch_size, num_objects, _ = inputs.size()
-
-        inputs = inputs.view(batch_size * num_objects, -1)
         x = self.nonlinear(inputs)
-        x = self.linear(x)
-        x = x.view(batch_size, num_objects)
+        x = self.linear(x).squeeze(2)
         return x
 
 
