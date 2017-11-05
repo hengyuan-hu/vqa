@@ -28,7 +28,8 @@ class BaseModel(nn.Module):
         q_emb = self.q_emb(q) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
 
-        v_emb = self.v_att(v, q_emb).sum(1) # [batch, v_dim]
+        att = self.v_att(v, q_emb).unsqueeze(2).expand_as(v)
+        v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
         logits = self.classifier(joint_repr)

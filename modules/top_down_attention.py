@@ -31,4 +31,4 @@ class TopDownAttention(Attention):
         q = q.unsqueeze(1).expand(batch, num_feat, self.q_dim)
         inputs = torch.cat((v, q), 2)
 
-        return super(TopaDownAttention, self).logits(inputs)
+        return super(TopDownAttention, self).logits(inputs)
