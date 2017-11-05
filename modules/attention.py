@@ -43,6 +43,28 @@ class Attention(nn.Module):
         return x
 
 
+class UniAttention(nn.Module):
+    '''
+    Generic attention modules that computes a soft attention distribution
+    over a set of objects.
+    '''
+
+    def __init__(self, in_dim):
+        super(UniAttention, self).__init__()
+
+        self.linear = weight_norm(nn.Linear(in_dim, 1), dim=None)
+
+    def forward(self, inputs):
+        '''
+        inputs: [batch, num_objs, dim]
+
+        return: [batch_size, num_objects]
+        '''
+        x = self.linear(inputs).squeeze(2)
+        weights = nn.functional.softmax(x)
+        return weights
+
+
 class NewAttention(nn.Module):
     '''
     Generic attention modules that computes a soft attention distribution
