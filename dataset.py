@@ -217,25 +217,23 @@ class VQAFeatureDataset(VQADataset):
             h5_path = os.path.join(dataroot, '%s36.hdf5' % name)
             with h5py.File(h5_path, 'r') as hf:
                 self.features = np.array(hf.get('image_features'))
-
-                # self.bboxes = np.array(hf.get('image_bb'))
-                # # normalize
-                # self.bboxes = (self.bboxes / 320.0) - 1.0
+                self.spatials = np.array(hf.get('spatial_features'))
 
             self.entries = _load_dataset(dataroot, name, self.img_id2idx)
         else:
             self.features = np.load(os.path.join(dataroot, 'dev_features.npy'))
-            # self.bboxes = np.load(os.path.join(dataroot, 'dev_bboxes.npy'))
+            self.spatials = np.load(os.path.join(dataroot, 'dev_spatials.npy'))
             self.entries = cPickle.load(
                 open(os.path.join(dataroot, 'dev_entries.pkl')))
 
         self.tokenize()
         self.tensorize()
         self.v_dim = self.features.size(2)
+        self.s_dim = self.spatials.size(2)
 
     def tensorize(self):
         self.features = torch.from_numpy(self.features)
-        # self.bboxes = torch.from_numpy(self.bboxes)
+        self.spatials = torch.from_numpy(self.spatials)
 
         for entry in self.entries:
             question = torch.from_numpy(np.array(entry['q_token']))
@@ -257,8 +255,7 @@ class VQAFeatureDataset(VQADataset):
         entry = self.entries[index]
 
         features = self.features[entry['image']]
-        # bboxes = self.bboxes[entry['image']]
-        bboxes = torch.rand(4)
+        spatials = self.spatials[entry['image']]
         question = entry['q_token']
 
         answer = entry['answer']
@@ -268,7 +265,7 @@ class VQAFeatureDataset(VQADataset):
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, bboxes, question, target
+        return features, spatials, question, target
 
     def __len__(self):
         return len(self.entries)
