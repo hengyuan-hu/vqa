@@ -28,6 +28,7 @@ class BaseModel(nn.Module):
         q_emb = self.q_emb(q) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
 
+        v = torch.cat([v, b], 2)
         att = self.v_att(v, q_emb).unsqueeze(2).expand_as(v)
         v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
@@ -87,9 +88,9 @@ def build_baseline0_double_dropout2(dataset, num_hid):
 
 def build_baseline0_newatt(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = NewAttention(dataset.v_dim, q_emb.nhid)
+    v_att = NewAttention(dataset.v_dim + dataset.s_dim, q_emb.nhid)
     q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
+    v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_att, q_net, v_net, classifier)
 
