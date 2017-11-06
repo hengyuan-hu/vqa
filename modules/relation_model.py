@@ -26,6 +26,11 @@ class BaseModel(nn.Module):
         self.v_net = v_net
         self.classifier = classifier
 
+        self.q_gate = nn.Sequential(
+            nn.utils.weight_norm(nn.Linear(300, 1)),
+            nn.Sigmoid()
+        )
+
     def forward(self, v, b, q, labels):
         """Forward
 
@@ -44,12 +49,12 @@ class BaseModel(nn.Module):
         q_joint_emb = torch.cat([q_sementic_emb, q_relation_emb], 1)
         q_repr = self.q_net(q_joint_emb)
 
+        relation_gate = self.q_gate(q_relation_emb)
+
         sementic_att = self.v_att.logits(v, q_sementic_emb).unsqueeze(2) #[batch, k, 1]
         relation_att = self.relation(b, q_relation_emb) # [batch, k, k]
-        # relation_att = Variable(torch.eye(relation_att.size(1))).cuda()
-        # relation_att = relation_att.repeat(sementic_att.size(0), 1, 1)
         prop_att = torch.bmm(relation_att, sementic_att).squeeze(2) # [batch, k]
-        prop_att = prop_att + sementic_att.squeeze(2)
+        prop_att = prop_att + relation_gate * sementic_att.squeeze(2)
         prop_att = nn.functional.softmax(prop_att).unsqueeze(2) # [batch, k, 1]
         v_emb = (prop_att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
