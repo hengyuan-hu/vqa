@@ -49,7 +49,7 @@ class BaseModel(nn.Module):
         # relation_att = Variable(torch.eye(relation_att.size(1))).cuda()
         # relation_att = relation_att.repeat(sementic_att.size(0), 1, 1)
         prop_att = torch.bmm(relation_att, sementic_att).squeeze(2) # [batch, k]
-        # prop_att = prop_att + sementic_att.squeeze(2)
+        prop_att = prop_att + sementic_att.squeeze(2)
         prop_att = nn.functional.softmax(prop_att).unsqueeze(2) # [batch, k, 1]
         v_emb = (prop_att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
