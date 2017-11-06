@@ -35,17 +35,18 @@ class RelationModule(nn.Module):
         joint_repr = nn.functional.normalize(joint_repr, 2, 3)
         logits = self.linear(joint_repr).squeeze(3) # [batch, k, k]
 
-        # make the diagnal 0
+        # make the diagnal 1
         a = 1 - torch.eye(k).unsqueeze(0).expand_as(logits)
         a = Variable(a).cuda()
         # remove diagnal
         logits = logits * a
-        # add large negative value to diagnal
-        a = (1 - a) * (-1e30)
+        # add large postive value to diagnal
+        a = (1 - a) * (1e30)
         logits = logits + a
+        w = logits.sigmoid()
 
-        w = nn.functional.softmax(logits.view(batch*k, k))
-        w = w.view(batch, k, k)
+        # w = nn.functional.softmax(logits.view(batch*k, k))
+        # w = w.view(batch, k, k)
         return w
 
 
