@@ -63,11 +63,16 @@ if __name__ == '__main__':
 
     # seems not necessary
     # utils.init_net(model, None)
-    model.q_emb.init_embedding('data/glove6b_init_300d.npy')
+    model.w_emb.init_embedding('data/glove6b_init_300d.npy')
 
     if args.task != 'dev':
         model = nn.DataParallel(model).cuda()
 
     logger = utils.Logger(args.log)
-    train(model, train_dset, eval_dset, args.epochs, batch_size, logger, args.save_path)
-
+    train(model,
+          train_dset,
+          eval_dset,
+          args.epochs,
+          batch_size,
+          logger,
+          args.save_path)
