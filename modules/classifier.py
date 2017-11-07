@@ -16,10 +16,4 @@ class SimpleClassifier(nn.Module):
 
     def forward(self, x):
         logits = self.main(x)
-        return nn.functional.sigmoid(logits)
-
-    def loss(self, x, y):
-        logits = self.main(x)
-        l = nn.functional.binary_cross_entropy_with_logits(logits, y)
-        l *= y.size(1)
-        return l
+        return logits

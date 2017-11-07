@@ -5,7 +5,8 @@ import numpy as np
 
 
 class QuestionEmbedding(nn.Module):
-    def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect, rnn_type='GRU'):
+    def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect,
+                  emb_dropout=0.0, dropout=0.0, rnn_type='GRU'):
         """Module for question embedding
 
         The ntoken-th dim is used for padding_idx, which agrees *implicitly*
@@ -16,8 +17,13 @@ class QuestionEmbedding(nn.Module):
         rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
 
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
+        self.emb_dropout = nn.Dropout(emb_dropout)
+
         self.rnn = rnn_cls(
-            emb_dim, nhid, nlayers, bidirectional=bidirect, batch_first=True)
+            emb_dim, nhid, nlayers,
+            bidirectional=bidirect,
+            dropout=dropout,
+            batch_first=True)
 
         self.ntoken = ntoken
         self.emb_dim = emb_dim
@@ -45,8 +51,8 @@ class QuestionEmbedding(nn.Module):
         # x: [batch, sequence_length]
         batch = x.size(0)
         hidden = self.init_hidden(batch)
-        # print x.size()
         emb = self.emb(x)
+        emb = self.emb_dropout(emb)
         # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
@@ -59,15 +65,13 @@ class QuestionEmbedding(nn.Module):
         return emb
 
     def forward_allout(self, x):
-        assert self.ndirections == 1, 'bidirection not supported yet'
         batch = x.size(0)
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
-        # emb: [sequence, batch, emb_dim]
+        # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
-        return output
-
+        return emb, output
 
 
 if __name__ == '__main__':
