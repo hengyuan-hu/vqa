@@ -274,6 +274,26 @@ class VQAFeatureDataset(VQADataset):
         return len(self.entries)
 
 
+def VQAFilteredDataset(Dataset):
+
+    def __init__(self, dset, filter_fun):
+        super(Dataset, self).__init__()
+
+        self.dset = dset
+        self.indices = []
+
+        for i in xrange(len(dset.entries)):
+            entry = dset.entries[i]
+            if filter_fun(entry):
+                self.indices += [i]
+
+    def __getitem__(self, index):
+        return self.dset[self.indices[index]]
+
+    def __len__(self):
+        return len(self.indices)
+
+
 if __name__ == '__main__':
     import time
 

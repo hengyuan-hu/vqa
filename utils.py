@@ -1,8 +1,7 @@
 import os
 import numpy as np
 from PIL import Image
-import torch.nn as nn
-from collections import OrderedDict
+import torch.nn as nn from collections import OrderedDict
 
 
 EPS = 1e-7
@@ -57,6 +56,21 @@ def init_net(net, net_file):
         net.load_state_dict(torch.load(net_file))
     else:
         net.apply(weights_init)
+
+
+def check_entry(entry, keywords):
+    q = entry['question'].lower()
+    words = q[:-1].split(" ")
+    for k in keywords:
+        if k in words:
+            return True
+
+    return False
+
+action_keywords = ['holding', 'throwing', 'pointing', 'kicking', 'swinging', 'looking']
+action_filter = lambda x: check_entry(x, action_keywords)
+spatial_keywords = ['above', 'below', 'left', 'right', 'between', 'top', 'under']
+spatial_filter = lambda x: check_entry(x, spatial_keywords)
 
 
 class Logger(object):
