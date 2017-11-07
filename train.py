@@ -72,15 +72,17 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
         print logger.log(
-            'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f), ' \
-            'spatial_score: %.2f (%.2f), action_score: %.2f (%.2f)'
-            % (total_loss, 100 * train_score, 100 * eval_score, eval_bound, 100 * spatial_score,
-                spatial_bound, 100 * action_score, action_bound)
+            'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f)'
+            % (total_loss, 100*train_score, 100*eval_score, 100*eval_bound)
+        )
+        print logger.log(
+            'spatial_score: %.2f (%.2f), action_score: %.2f (%.2f)' %
+            (100*spatial_score, 100*spatial_bound, 100*action_score, 100*action_bound)
         )
 
         if save_path is not None:
-          print 'saving model...'
-          torch.save(model.state_dict(), save_path + '_epoch' + str(epoch) + '.pt')
+            print 'saving model...'
+            torch.save(model.state_dict(), save_path + '_epoch' + str(epoch) + '.pt')
 
 
 def evaluate(model, dataloader):

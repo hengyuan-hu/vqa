@@ -6,6 +6,18 @@ from glu import GLU
 import numpy as np
 
 
+_FLOAT32_MAX = np.finfo(np.float32).max
+_HALF_LOG_MAX = float(np.log(_FLOAT32_MAX) / 2)
+
+
+def softmax(x, dim):
+    a = x.max(dim, keepdim=True)[0] - _HALF_LOG_MAX
+    x = x - a.expand_as(x)
+    exp_x = torch.exp(x)
+    sum_exp = exp_x.sum(dim, keepdim=True).expand_as(exp_x)
+    return exp_x / sum_exp
+
+
 class RelationModule(nn.Module):
     def __init__(self, v_dim, q_dim, num_hid):
         super(RelationModule, self).__init__()
@@ -34,19 +46,21 @@ class RelationModule(nn.Module):
         joint_repr = v_proj * q_proj
         joint_repr = nn.functional.normalize(joint_repr, 2, 3)
         logits = self.linear(joint_repr).squeeze(3) # [batch, k, k]
-
-        # make the diagnal 0
-        a = 1 - torch.eye(k).unsqueeze(0).expand_as(logits)
-        a = Variable(a).cuda()
-        # remove diagnal
-        logits = logits * a
-        # add large negative value to diagnal
-        a = (1 - a) * (-1e30)
-        logits = logits + a
-
-        w = nn.functional.softmax(logits.view(batch*k, k))
-        w = w.view(batch, k, k)
+        w = softmax(logits, 1)
         return w
+
+        # # make the diagnal 0
+        # a = 1 - torch.eye(k).unsqueeze(0).expand_as(logits)
+        # a = Variable(a).cuda()
+        # # remove diagnal
+        # logits = logits * a
+        # # add large negative value to diagnal
+        # a = (1 - a) * (-1e30)
+        # logits = logits + a
+
+        # w = nn.functional.softmax(logits.view(batch*k, k))
+        # w = w.view(batch, k, k)
+        # return w
 
 
 if __name__ == '__main__':
@@ -63,4 +77,6 @@ if __name__ == '__main__':
     print 'att:', att
     print 'w:', w
 
-    print torch.bmm(w, att).squeeze()
+    prop_att = torch.bmm(w, att).squeeze()
+    print prop_att
+    print prop_att.sum(1)
