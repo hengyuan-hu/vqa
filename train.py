@@ -3,7 +3,7 @@ import torch
 from torch.autograd import Variable
 
 
-def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
+def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_path=None):
     # optim = torch.optim.Adadelta(model.parameters())
     # optim = torch.optim.Adam(model.parameters())
     optim = torch.optim.Adamax(model.parameters())
@@ -35,6 +35,10 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
         print logger.log('train_loss: %.2f, eval_score: %.2f (%.2f)'
                          % (total_loss, score, upper_bound))
+
+        if save_path is not None:
+          print 'saving model...'
+          torch.save(model.state_dict(), save_path + '_epoch' + str(epoch) + '.pt')
 
 
 def evaluate(model, eval_dset):

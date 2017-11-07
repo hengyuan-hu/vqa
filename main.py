@@ -19,6 +19,7 @@ def parse_args():
     parser.add_argument('--log', type=str, default='logs/exp0.txt')
     parser.add_argument('--num_hid', type=int, default=512)
     parser.add_argument('--model', type=str, default='baseline0')
+    parser.add_argument('--save_path', type=str, default=None)
     # parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--batch_size', type=int, default=512)
     # parser.add_argument('--dropout', type=float, default=0.2)
@@ -68,4 +69,5 @@ if __name__ == '__main__':
 
     model = nn.DataParallel(model).cuda()
     logger = utils.Logger(args.log)
-    train(model, train_dset, eval_dset, args.epochs, batch_size, logger)
+    train(model, train_dset, eval_dset, args.epochs, batch_size, logger, args.save_path)
+
