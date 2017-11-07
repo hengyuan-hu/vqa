@@ -47,10 +47,13 @@ class BaseModel(nn.Module):
         sementic_att = self.v_att(v, q_sementic_emb).unsqueeze(2) #[batch, k, 1]
         relation_att = self.relation(b, q_relation_emb) # [batch, k, k]
         prop_att = torch.bmm(relation_att, sementic_att) # [batch, k, 1]
-        v_emb = (prop_att * v).sum(1) # [batch, v_dim]
+        v_emb = (sementic_att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
 
-        joint_repr = q_repr * v_repr
+        rv_emb = (prop_att * v).sum(1)
+        rv_repr = self.v_net(rv_emb)
+
+        joint_repr = q_repr * (v_repr + rv_repr)
         logits = self.classifier(joint_repr)
         return logits
 
