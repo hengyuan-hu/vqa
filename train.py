@@ -1,7 +1,9 @@
 import time
 import torch
 import torch.nn as nn
+import utils
 from torch.autograd import Variable
+from dataset import VQAFilteredDataset
 import gc
 
 
@@ -43,6 +45,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
         train_score = 0
         t = time.time()
 
+        for i, (v, b, q, a) in enumerate(train_loader):
             v = Variable(v).cuda()
             b = Variable(b).cuda()
             q = Variable(q).cuda()
@@ -69,7 +72,7 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
         print logger.log(
-            'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f),' \
+            'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f), ' \
             'spatial_score: %.2f (%.2f), action_score: %.2f (%.2f)'
             % (total_loss, 100 * train_score, 100 * eval_score, eval_bound, 100 * spatial_score,
                 spatial_bound, 100 * action_score, action_bound)

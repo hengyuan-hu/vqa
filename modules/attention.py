@@ -27,8 +27,11 @@ class Attention(nn.Module):
 
         return: [batch_size, num_objects]
         '''
+        batch_size, num_objects, _ = inputs.size()
+        inputs = inputs.view(batch_size * num_objects, -1)
         x = self.nonlinear(inputs)
-        x = self.linear(x).squeeze(2)
+        x = self.linear(x)
+        x = x.view(batch_size, num_objects)
         weights = nn.functional.softmax(x)
         return weights
 
@@ -38,9 +41,12 @@ class Attention(nn.Module):
 
         return: [batch, num_objs]
         """
+        batch_size, num_objects, _ = inputs.size()
+        inputs = inputs.view(batch_size * num_objects, -1)
         x = self.nonlinear(inputs)
-        x = self.linear(x).squeeze(2)
-        return x
+        x = self.linear(x)
+        weights = x.view(batch_size, num_objects)
+        return weights
 
 
 class UniAttention(nn.Module):

@@ -271,10 +271,10 @@ class VQAFeatureDataset(VQADataset):
         return len(self.entries)
 
 
-def VQAFilteredDataset(Dataset):
+class VQAFilteredDataset(Dataset):
 
     def __init__(self, dset, filter_fun):
-        super(Dataset, self).__init__()
+        super(VQAFilteredDataset, self).__init__()
 
         self.dset = dset
         self.indices = []

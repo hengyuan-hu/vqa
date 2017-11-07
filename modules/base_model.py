@@ -39,9 +39,9 @@ class BaseModel(nn.Module):
 
 def build_baseline0(dataset, num_hid):
     q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
+    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim + dataset.s_dim, num_hid)
     q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
+    v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(q_emb, v_att, q_net, v_net, classifier)
 
