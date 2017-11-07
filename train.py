@@ -21,7 +21,7 @@ def compute_score_with_logits(logits, labels):
     return scores
 
 
-def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
+def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_path=None):
     # optim = torch.optim.Adadelta(model.parameters())
     # optim = torch.optim.Adam(model.parameters())
     optim = torch.optim.Adamax(model.parameters())
@@ -74,6 +74,10 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger):
             % (total_loss, 100 * train_score, 100 * eval_score, eval_bound, 100 * spatial_score,
                 spatial_bound, 100 * action_score, action_bound)
         )
+
+        if save_path is not None:
+          print 'saving model...'
+          torch.save(model.state_dict(), save_path + '_epoch' + str(epoch) + '.pt')
 
 
 def evaluate(model, dataloader):

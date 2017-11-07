@@ -65,15 +65,13 @@ class QuestionEmbedding(nn.Module):
         return emb
 
     def forward_allout(self, x):
-        assert self.ndirections == 1, 'bidirection not supported yet'
         batch = x.size(0)
         hidden = self.init_hidden(batch)
         emb = self.emb(x)
-        # emb: [sequence, batch, emb_dim]
+        # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
         output, hidden = self.rnn(emb, hidden)
-        return output
-
+        return emb, output
 
 
 if __name__ == '__main__':

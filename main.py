@@ -8,6 +8,7 @@ import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
 from modules import base_model
+from modules import relation_model
 from train import train
 import utils
 
@@ -19,6 +20,7 @@ def parse_args():
     parser.add_argument('--log', type=str, default='logs/exp0.txt')
     parser.add_argument('--num_hid', type=int, default=512)
     parser.add_argument('--model', type=str, default='baseline0')
+    parser.add_argument('--save_path', type=str, default=None)
     # parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--batch_size', type=int, default=512)
     # parser.add_argument('--dropout', type=float, default=0.2)
@@ -54,6 +56,8 @@ if __name__ == '__main__':
     func_name = 'build_%s' % args.model
     if 'baseline' in args.model:
         model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
+    elif 'rm' in args.model:
+        model = getattr(relation_model, func_name)(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
 
@@ -61,6 +65,9 @@ if __name__ == '__main__':
     # utils.init_net(model, None)
     model.q_emb.init_embedding('data/glove6b_init_300d.npy')
 
-    model = nn.DataParallel(model).cuda()
+    if args.task != 'dev':
+        model = nn.DataParallel(model).cuda()
+
     logger = utils.Logger(args.log)
-    train(model, train_dset, eval_dset, args.epochs, batch_size, logger)
+    train(model, train_dset, eval_dset, args.epochs, batch_size, logger, args.save_path)
+
