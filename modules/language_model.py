@@ -4,43 +4,54 @@ from torch.autograd import Variable
 import numpy as np
 
 
-class QuestionEmbedding(nn.Module):
-    def __init__(self, ntoken, emb_dim, nhid, nlayers, bidirect,
-                  emb_dropout=0.0, dropout=0.0, rnn_type='GRU'):
-        """Module for question embedding
+class WordEmbedding(nn.Module):
+    """Word Embedding
 
-        The ntoken-th dim is used for padding_idx, which agrees *implicitly*
-        with the definition in Dictionary.
-        """
-        super(QuestionEmbedding, self).__init__()
-        assert rnn_type == 'LSTM' or rnn_type == 'GRU'
-        rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
-
+    The ntoken-th dim is used for padding_idx, which agrees *implicitly*
+    with the definition in Dictionary.
+    """
+    def __init__(self, ntoken, emb_dim, dropout):
+        super(WordEmbedding, self).__init__()
         self.emb = nn.Embedding(ntoken+1, emb_dim, padding_idx=ntoken)
-        self.emb_dropout = nn.Dropout(emb_dropout)
-
-        self.rnn = rnn_cls(
-            emb_dim, nhid, nlayers,
-            bidirectional=bidirect,
-            dropout=dropout,
-            batch_first=True)
-
+        self.dropout = nn.Dropout(dropout)
         self.ntoken = ntoken
         self.emb_dim = emb_dim
-        self.nhid = nhid
-        self.nlayers = nlayers
-        self.rnn_type = rnn_type
-        self.ndirections = 1 + int(bidirect)
 
     def init_embedding(self, np_file):
         weight_init = torch.from_numpy(np.load(np_file))
         assert weight_init.shape == (self.ntoken, self.emb_dim)
         self.emb.weight.data[:self.ntoken] = weight_init
 
+    def forward(self, x):
+        emb = self.emb(x)
+        emb = self.dropout(emb)
+        return emb
+
+
+class QuestionEmbedding(nn.Module):
+    def __init__(self, in_dim, num_hid, nlayers, bidirect, dropout, rnn_type='GRU'):
+        """Module for question embedding
+        """
+        super(QuestionEmbedding, self).__init__()
+        assert rnn_type == 'LSTM' or rnn_type == 'GRU'
+        rnn_cls = nn.LSTM if rnn_type == 'LSTM' else nn.GRU
+
+        self.rnn = rnn_cls(
+            in_dim, num_hid, nlayers,
+            bidirectional=bidirect,
+            dropout=dropout,
+            batch_first=True)
+
+        self.in_dim = in_dim
+        self.num_hid = num_hid
+        self.nlayers = nlayers
+        self.rnn_type = rnn_type
+        self.ndirections = 1 + int(bidirect)
+
     def init_hidden(self, batch):
         # just to get the type of tensor
         weight = next(self.parameters()).data
-        hid_shape = (self.nlayers * self.ndirections, batch, self.nhid)
+        hid_shape = (self.nlayers * self.ndirections, batch, self.num_hid)
         if self.rnn_type == 'LSTM':
             return (Variable(weight.new(*hid_shape).zero_()),
                     Variable(weight.new(*hid_shape).zero_()))
@@ -48,30 +59,26 @@ class QuestionEmbedding(nn.Module):
             return Variable(weight.new(*hid_shape).zero_())
 
     def forward(self, x):
-        # x: [batch, sequence_length]
+        # x: [batch, sequence_length, in_dim]
         batch = x.size(0)
         hidden = self.init_hidden(batch)
-        emb = self.emb(x)
-        emb = self.emb_dropout(emb)
-        # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
-        output, hidden = self.rnn(emb, hidden)
+        output, hidden = self.rnn(x, hidden)
+
         if self.ndirections == 1:
             return output[:, -1]
 
-        forward_ = output[:, -1, :self.nhid]
-        backward = output[:, 0, self.nhid:]
-        emb = torch.cat((forward_, backward), dim=1)
-        return emb
+        forward_ = output[:, -1, :self.num_hid]
+        backward = output[:, 0, self.num_hid:]
+        return torch.cat((forward_, backward), dim=1)
 
     def forward_allout(self, x):
+        # x: [batch, sequence, in_dim]
         batch = x.size(0)
         hidden = self.init_hidden(batch)
-        emb = self.emb(x)
-        # emb: [batch, sequence, emb_dim]
         self.rnn.flatten_parameters()
-        output, hidden = self.rnn(emb, hidden)
-        return emb, output
+        output, hidden = self.rnn(x, hidden)
+        return output
 
 
 if __name__ == '__main__':
@@ -86,11 +93,16 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(
         dset, batch_size=batch, shuffle=True, num_workers=4, drop_last=False)
 
-    i, (v, q, a) = next(enumerate(dataloader))
-    model = QuestionEmbedding(dictionary.ntoken, 300, 512, 1, True)
-    model.init_embedding('data/glove6b_init_300d.npy')
+    i, (v, s, q, a) = next(enumerate(dataloader))
+    word_emb = WordEmbedding(dictionary.ntoken, 300, 0.0)
+    word_emb.init_embedding('data/glove6b_init_300d.npy')
 
-    print q.size()
+    question_emb = QuestionEmbedding(300, 512, 1, False, 0.0)
+
     q = q.t() # [sequence, batch]
-    y = model.forward(Variable(q))
-    print y.size()
+    w = word_emb.forward(Variable(q))
+    q_emb = question_emb(w)
+
+    print 'input size:', q.size()
+    print 'word embedding size:', w.size()
+    print 'question embedding size:', q_emb.size()
