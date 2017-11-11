@@ -295,7 +295,7 @@ if __name__ == '__main__':
     import time
 
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
-    dset = VQAFeatureDataset('val', dictionary)
+    dset = VQAFeatureDataset('dev', dictionary)
     dataloader = torch.utils.data.DataLoader(
         dset, batch_size=100, shuffle=True, num_workers=4, drop_last=False)
 
