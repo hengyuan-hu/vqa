@@ -1,3 +1,6 @@
+import os
+import sys
+import argparse
 import time
 import torch
 import torch.nn as nn
@@ -5,6 +8,9 @@ from torch.autograd import Variable
 from torch.nn.utils.weight_norm import weight_norm
 from torch.utils.data import DataLoader
 import numpy as np
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from utils import Logger
 
 
 class Classifier(nn.Module):
@@ -94,11 +100,31 @@ def evaluate(model, dataloader):
     return score
 
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--log', type=str, default='logs/')
+    parser.add_argument('--num_hid', type=int, default=512)
+    parser.add_argument('--num_layer', type=int, default=2)
+    parser.add_argument('--save_path', type=str, default=None)
+    parser.add_argument('--batch_size', type=int, default=512)
+    parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--seed', type=int, default=1111, help='random seed')
+
+    args = parser.parse_args()
+    args.log += 'hid%d_layer%d.txt'
+
+    return args
+
+
 if __name__ == '__main__':
     from dataset import VQAImageDataset
 
-    model = Classifier(2048, 512, 2, 81).cuda()
+    args = parse_args()
+
+    model = Classifier(2048, args.num_hid, args.num_layer, 81).cuda()
     train_dset = VQAImageDataset('train')
     eval_dset = VQAImageDataset('val')
 
-    train(model, train_dset, eval_dset, 10, 512, None, None)
+    logger = Logger(args.log)
+    train(model, train_dset, eval_dset, 10, 256, logger, None)

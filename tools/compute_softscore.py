@@ -84,9 +84,9 @@ def get_score(occurences):
     elif occurences == 1:
         return 0.3
     elif occurences == 2:
-        return 0.6333333333333333
+        return 0.6
     elif occurences == 3:
-        return 0.9666666666666666
+        return 0.9
     else:
         return 1
 
