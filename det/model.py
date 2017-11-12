@@ -127,6 +127,6 @@ if __name__ == '__main__':
     eval_dset = VQAImageDataset('val')
 
     logger = Logger(args.log)
-    train(model, train_dset, eval_dset, 10, 256, logger, None)
+    train(model, train_dset, eval_dset, args.epochs, 256, logger, None)
     model_name = 'det_h%d_layer%d.pth' % (args.num_hid, args.num_layer)
-    model.save_state_dict(model_name)
+    torch.save(model.state_dict(), model_name)
