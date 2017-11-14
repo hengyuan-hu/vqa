@@ -5,7 +5,7 @@ from top_down_attention import TopDownAttention
 from attention import NewAttention, UniAttention
 from language_model import WordEmbedding, QuestionEmbedding
 from glu import GLU
-from classifier import SimpleClassifier
+from classifier import SimpleClassifier, DualClassifier
 from relation import RelationModule
 from torch.nn.utils.weight_norm import weight_norm
 
@@ -66,6 +66,14 @@ class DetModel1(nn.Module):
 
         return: logits, not probs
         """
+        q_emb, v_emb, joint_repr = self._baseline_forward(v, q)
+        relation_repr = self._relation_forward(b, det, q_emb)
+        joint_repr = joint_repr + relation_repr
+
+        logits = self.classifier(joint_repr)
+        return logits
+
+    def _baseline_forward(self, v, q):
         # normal baseline model
         w_emb = self.w_emb(q)
         q_emb = self.q_emb(w_emb) # [batch, q_dim]
@@ -75,17 +83,15 @@ class DetModel1(nn.Module):
         v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb) # [batch, num_hid]
 
-        joint_repr = q_repr + v_repr
+        joint_repr = q_repr * v_repr
+        return q_emb, v_emb, joint_repr
 
+    def _relation_forward(self, b, det, q_emb):
         # relational part
         det_w_emb = self.w_emb(det) # [batch, num_objs, w_dim]
         relation_v = torch.cat([det_w_emb, b], 2)
         relation_repr = self.relation(relation_v, q_emb)
-
-        joint_repr = joint_repr + relation_repr
-
-        logits = self.classifier(joint_repr)
-        return logits
+        return relation_repr
 
 
 def build_det1(dataset, num_hid):
