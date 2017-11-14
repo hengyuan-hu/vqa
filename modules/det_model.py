@@ -20,8 +20,9 @@ class RelationNet(nn.Module):
         in_dim = 2 * v_dim + q_dim
         layers = []
         for _ in range(num_layers):
-            layers.append(weight_norm(nn.Linear(in_dim, num_hid), dim=None))
-            layers.append(nn.ReLU())
+            # layers.append(weight_norm(nn.Linear(in_dim, num_hid), dim=None))
+            # layers.append(nn.ReLU())
+            layers.append(GLU(in_dim, num_hid))
             in_dim = num_hid
 
         self.main = nn.Sequential(*layers)
@@ -94,7 +95,7 @@ def build_det1(dataset, num_hid):
     v_att = NewAttention(dataset.v_dim, num_hid)
     q_net = GLU(num_hid, num_hid)
     v_net = GLU(dataset.v_dim, num_hid)
-    relation = RelationNet(dataset.s_dim + 300, num_hid, num_hid, 3)
+    relation = RelationNet(dataset.s_dim + 300, num_hid, num_hid, 2)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
 
     return DetModel1(w_emb, q_emb, v_att, q_net, v_net, relation, classifier)
