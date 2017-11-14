@@ -94,6 +94,24 @@ class DetModel1(nn.Module):
         return relation_repr
 
 
+class DetModel2(DetModel1):
+    """Dual Classifier model"""
+    def forward(self, v, b, det, q, labels):
+        """Forward
+
+        v: [batch, num_objs, obj_dim]
+        b: [batch, num_objs, b_dim]
+        det: [batch, num_objs]
+        q: [batch_size, seq_length]
+
+        return: logits, not probs
+        """
+        q_emb, v_emb, joint_repr = self._baseline_forward(v, q)
+        relation_repr = self._relation_forward(b, det, q_emb)
+        logits = self.classifier(joint_repr, relation_repr)
+        return logits
+
+
 def build_det1(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
@@ -104,3 +122,15 @@ def build_det1(dataset, num_hid):
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
 
     return DetModel1(w_emb, q_emb, v_att, q_net, v_net, relation, classifier)
+
+
+def build_det2(dataset, num_hid):
+    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    v_att = NewAttention(dataset.v_dim, num_hid)
+    q_net = GLU(num_hid, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    relation = RelationNet(dataset.s_dim + 300, num_hid, num_hid, 3)
+    classifier = DualClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+
+    return DetModel2(w_emb, q_emb, v_att, q_net, v_net, relation, classifier)

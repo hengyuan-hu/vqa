@@ -22,13 +22,14 @@ class SimpleClassifier(nn.Module):
 class DualClassifier(nn.Module):
     def __init__(self, in_dim, hid_dim, out_dim):
         super(DualClassifier, self).__init__()
-        self.cls1 = self._build_network()
-        self.cls2 = self._build_network()
+        self.cls1 = self._build_network(in_dim, hid_dim, out_dim)
+        self.cls2 = self._build_network(in_dim, hid_dim, out_dim)
 
-    def _build_network(self):
+    def _build_network(self, in_dim, hid_dim, out_dim):
         layers = [
-            weight_norm(nn.Linear(hid_dim, hid_dim), dim=None),
-            nn.ReLU(),
+            #weight_norm(nn.Linear(in_dim, hid_dim), dim=None),
+            # nn.ReLU(),
+            GLU(in_dim, hid_dim),
             nn.Dropout(0.5, inplace=True),
             weight_norm(nn.Linear(hid_dim, out_dim), dim=None)
         ]
@@ -37,5 +38,5 @@ class DualClassifier(nn.Module):
     def forward(self, x1, x2):
         logits1 = self.cls1(x1)
         logits2 = self.cls2(x2)
-        logits = torch.max(logits1, logits2)
+        logits = 0.5 * (logits1 + logits2)
         return logits
