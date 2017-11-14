@@ -4,3 +4,5 @@ data
 logs/
 new_logs/
 task.sh
+*.pth
+new_logs*
