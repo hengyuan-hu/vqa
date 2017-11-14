@@ -4,3 +4,4 @@ data
 logs/
 new_logs/
 task.sh
+*.npy

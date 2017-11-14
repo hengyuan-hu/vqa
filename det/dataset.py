@@ -206,7 +206,7 @@ def compute_detection_targets(entries, spatials, threshold):
 
 
 class VQAImageDataset(Dataset):
-    def __init__(self, name, dataroot='../data'):
+    def __init__(self, name, dataroot='../data', model=None):
         super(VQAImageDataset, self).__init__()
         assert name in ['train', 'val']
 
@@ -215,6 +215,7 @@ class VQAImageDataset(Dataset):
         id2feature = cPickle.load(
             open(os.path.join(dataroot, '%s36_imgid2idx.pkl' % name)))
 
+        self.id2name[0] = '__background__'
         self.entries = _load_dataset(dataroot, name, id2path, id2feature, id2bboxes)
 
         print 'loading features from h5 file'
@@ -225,6 +226,7 @@ class VQAImageDataset(Dataset):
 
         self.det_targets = compute_detection_targets(self.entries, self.spatials, 0.5)
         self.tensorize()
+        self.model = model
 
     def tensorize(self):
         self.features = torch.from_numpy(self.features)
@@ -248,6 +250,11 @@ class VQAImageDataset(Dataset):
             canvas.text([x1, y1], name)
 
         feature_idx = self.entries[index]['feature_idx']
+        if self.model is not None:
+            feature =  self.features[feature_idx].cuda()
+            logits = self.model(torch.autograd.Variable(feature)).data
+            _, det_cls = logits.max(1)
+
         for obj_idx in range(36):
             x1, y1, x2, y2 = self.spatials[feature_idx][obj_idx][:4]
             x1 *= width
@@ -257,7 +264,10 @@ class VQAImageDataset(Dataset):
             target = self.det_targets[feature_idx][obj_idx]
             if target > 0:
                 canvas.rectangle([x1, y1, x2, y2], outline=255)
-                canvas.text([x1, y1], str(target))
+                if self.model is not None:
+                    canvas.text([x1, y1], self.id2name[det_cls[obj_idx]])
+                else:
+                    canvas.text([x1, y1], self.id2name[target])
 
         print self.entries[index]['qa']
         image.show()
@@ -270,3 +280,12 @@ class VQAImageDataset(Dataset):
 
     def __len__(self):
         return len(self.entries)
+
+
+if __name__ == '__main__':
+    from model import Classifier
+
+    model = Classifier(2048, 512, 2, 81).cuda()
+    model.load_state_dict(torch.load('det_h512_layer2.pth'))
+
+    # eval_dset = VQAImageDataset('val')
