@@ -1,10 +1,9 @@
+import os
 import time
 import torch
 import torch.nn as nn
 import utils
 from torch.autograd import Variable
-from dataset import VQAFilteredDataset
-import gc
 
 
 def instance_bce_with_logits(logits, labels):
@@ -23,22 +22,11 @@ def compute_score_with_logits(logits, labels):
     return scores
 
 
-def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_path=None):
-    # optim = torch.optim.Adadelta(model.parameters())
+def train(model, train_loader, eval_loaders, num_epochs, output):
     # optim = torch.optim.Adam(model.parameters())
     optim = torch.optim.Adamax(model.parameters())
-
-    spatial_dset = VQAFilteredDataset(eval_dset, utils.spatial_filter)
-    action_dset = VQAFilteredDataset(eval_dset, utils.action_filter)
-
-    train_loader = torch.utils.data.DataLoader(
-        train_dset, batch_size, shuffle=True, num_workers=1)
-    eval_loader =  torch.utils.data.DataLoader(
-        eval_dset, batch_size, shuffle=True, num_workers=1)
-    spatial_loader =  torch.utils.data.DataLoader(
-        spatial_dset, batch_size, shuffle=True, num_workers=1)
-    action_loader =  torch.utils.data.DataLoader(
-        action_dset, batch_size, shuffle=True, num_workers=1)
+    logger = utils.Logger(os.path.join(output, 'log.txt'))
+    best_eval_score = 0
 
     for epoch in range(num_epochs):
         total_loss = 0
@@ -51,9 +39,10 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
             det = Variable(det).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
-            pred = model(v, b, det, q, a)
-            loss = instance_bce_with_logits(pred, a)
 
+            pred = model(v, b, det, q, a)
+
+            loss = instance_bce_with_logits(pred, a)
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
             optim.step()
@@ -63,26 +52,20 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
             total_loss += loss.data[0] * v.size(0)
             train_score += batch_score
 
-        gc.collect()
-        total_loss /= len(train_dset)
-        train_score /= len(train_dset)
-        eval_score, eval_bound = evaluate(model, eval_loader)
-        spatial_score, spatial_bound = evaluate(model, spatial_loader)
-        action_score, action_bound = evaluate(model, action_loader)
+        total_loss /= len(train_loader.dataset)
+        train_score = 100 * train_score / len(train_loader.dataset)
+        logger.append('\ttrain_loss: %.2f, score: %.2f' % (total_loss, train_score))
+
+        for eval_name in eval_loaders:
+            loader = eval_loaders[eval_name]
+            score, bound = evaluate(model, loader)
+            logger.append(
+                '\t%s_score: %.2f (%.2f)' % (eval_name, 100 * score, 100 * bound))
+            if eval_name == 'eval' and score > best_eval_score:
+                model_path = os.path.join(output, 'model.pth')
+                torch.save(model.state_dict(), model_path)
 
         print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
-        print logger.log(
-            'train_loss: %.2f, train_score: %.2f, eval_score: %.2f (%.2f)'
-            % (total_loss, 100*train_score, 100*eval_score, 100*eval_bound)
-        )
-        print logger.log(
-            'spatial_score: %.2f (%.2f), action_score: %.2f (%.2f)' %
-            (100*spatial_score, 100*spatial_bound, 100*action_score, 100*action_bound)
-        )
-
-        if save_path is not None:
-            print 'saving model...'
-            torch.save(model.state_dict(), save_path + '_epoch' + str(epoch) + '.pt')
 
 
 def evaluate(model, dataloader):
@@ -104,6 +87,6 @@ def evaluate(model, dataloader):
 
     model.train(True)
 
-    score = score / num_data
-    upper_bound = upper_bound / num_data
+    score = score / len(dataloader.dataset)
+    upper_bound = upper_bound / len(dataloader.dataset)
     return score, upper_bound

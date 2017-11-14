@@ -68,6 +68,7 @@ def check_entry(entry, keywords):
 
     return False
 
+
 action_keywords = ['holding', 'throwing', 'pointing', 'kicking', 'swinging']
 action_filter = lambda x: check_entry(x, action_keywords)
 spatial_keywords = ['above', 'below', 'left', 'right', 'between', 'top', 'under']
@@ -77,21 +78,25 @@ spatial_filter = lambda x: check_entry(x, spatial_keywords)
 class Logger(object):
     def __init__(self, output_name):
         folder = os.path.dirname(output_name)
+        self.msgs = []
         if not os.path.exists(folder):
             os.makedirs(folder)
         self.log_file = open(output_name, 'w')
         # self.infos = OrderedDict()
 
-    # def append(self, key, val):
-    #     vals = self.infos.setdefault(key, [])
-    #     vals.append(val)
+    def append(self, msg):
+        self.msgs.append(msg)
 
-    def log(self, msg):
-        # msgs = [extra_msg]
+    def log(self, extra_msg):
+        if extra_msg:
+            msgs = [extra_msg] + self.msgs
+        else:
+            msgs = self.msgs
         # for key, vals in self.infos.iteritems():
-        #     msgs.append('%s: %.6f' % (key, np.mean(vals)))
-        # msg = '\n'.join(msgs)
+        #     msgs.append('%s%s: %.2f' % (line_prefix, key, np.mean(vals)))
+        msg = '\n'.join(msgs)
         self.log_file.write(msg + '\n')
         self.log_file.flush()
+        self.msgs = []
         # self.infos = OrderedDict()
         return msg

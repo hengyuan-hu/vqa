@@ -30,7 +30,7 @@ class BaseModel(nn.Module):
         q_emb = self.q_emb(w_emb) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
 
-        v = torch.cat([v, b], 2)
+        # v = torch.cat([v, b], 2)
         att = self.v_att(v, q_emb).unsqueeze(2).expand_as(v)
         v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
