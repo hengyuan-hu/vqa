@@ -45,7 +45,8 @@ def build_baseline0(dataset, num_hid):
     v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim, num_hid)
     # v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim + dataset.s_dim, num_hid)
     q_net = GLU(q_emb.num_hid, num_hid)
-    v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    # v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
@@ -56,6 +57,7 @@ def build_baseline0_newatt(dataset, num_hid):
     v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
     # v_att = NewAttention(dataset.v_dim + dataset.s_dim, q_emb.num_hid)
     q_net = GLU(q_emb.num_hid, num_hid)
-    v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
+    # v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
