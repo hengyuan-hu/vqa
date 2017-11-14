@@ -9,6 +9,7 @@ import numpy as np
 from dataset import Dictionary, VQAFeatureDataset
 from modules import base_model
 from modules import relation_model
+from modules import det_model
 from train import train
 import utils
 
@@ -58,6 +59,8 @@ if __name__ == '__main__':
         model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
     elif 'rm' in args.model:
         model = getattr(relation_model, func_name)(train_dset, args.num_hid).cuda()
+    elif 'det' in args.model:
+        model = getattr(det_model, func_name)(train_dset, args.num_hid).cuda()
     else:
         assert False, 'invalid'
 

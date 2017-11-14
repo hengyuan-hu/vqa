@@ -45,12 +45,13 @@ def train(model, train_dset, eval_dset, num_epochs, batch_size, logger, save_pat
         train_score = 0
         t = time.time()
 
-        for i, (v, b, q, a) in enumerate(train_loader):
+        for i, (v, b, det, q, a) in enumerate(train_loader):
             v = Variable(v).cuda()
             b = Variable(b).cuda()
+            det = Variable(det).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
-            pred = model(v, b, q, a)
+            pred = model(v, b, det, q, a)
             loss = instance_bce_with_logits(pred, a)
 
             loss.backward()
@@ -90,11 +91,12 @@ def evaluate(model, dataloader):
     score = 0
     upper_bound = 0
     num_data = 0
-    for v, b, q, a in iter(dataloader):
+    for v, b, det, q, a in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
+        det = Variable(det, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()
-        pred = model(v, b, q, None)
+        pred = model(v, b, det, q, None)
         batch_score = compute_score_with_logits(pred, a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()

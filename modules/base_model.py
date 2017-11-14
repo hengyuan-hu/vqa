@@ -2,21 +2,22 @@ import torch
 import torch.nn as nn
 from top_down_attention import TopDownAttention
 from attention import NewAttention
-from language_model import QuestionEmbedding
+from language_model import WordEmbedding, QuestionEmbedding
 from glu import GLU
 from classifier import SimpleClassifier
 
 
 class BaseModel(nn.Module):
-    def __init__(self, q_emb, v_att, q_net, v_net, classifier):
+    def __init__(self, w_emb, q_emb, v_att, q_net, v_net, classifier):
         super(BaseModel, self).__init__()
+        self.w_emb = w_emb
         self.q_emb = q_emb
         self.v_att = v_att
         self.q_net = q_net
         self.v_net = v_net
         self.classifier = classifier
 
-    def forward(self, v, b, q, labels):
+    def forward(self, v, b, det, q, labels):
         """Forward
 
         v: [batch, num_objs, obj_dim]
@@ -25,7 +26,8 @@ class BaseModel(nn.Module):
 
         return: logits, not probs
         """
-        q_emb = self.q_emb(q) # [batch, q_dim]
+        w_emb = self.w_emb(q)
+        q_emb = self.q_emb(w_emb) # [batch, q_dim]
         q_repr = self.q_net(q_emb)
 
         v = torch.cat([v, b], 2)
@@ -38,12 +40,13 @@ class BaseModel(nn.Module):
 
 
 def build_baseline0(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim + dataset.s_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
+    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim + dataset.s_dim, num_hid)
+    q_net = GLU(q_emb.num_hid, num_hid)
     v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
+    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
 def build_baseline0_dropout(dataset, num_hid):

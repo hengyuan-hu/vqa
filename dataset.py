@@ -129,75 +129,7 @@ def _load_dataset(dataroot, name, img_id2val):
     return entries
 
 
-class VQADataset(Dataset):
-
-    def tokenize(self, max_length=14):
-        """Tokenizes the questions.
-
-        This will add q_token in each entry of the dataset.
-        -1 represent nil, and should be treated as padding_idx in embedding
-        """
-        for entry in self.entries:
-            tokens = self.dictionary.tokenize(entry['question'], False)
-            tokens = tokens[:max_length]
-            if len(tokens) < max_length:
-                # TODO: note here we pad in front of the sentence
-                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
-                tokens = padding + tokens
-            utils.assert_eq(len(tokens), max_length)
-            entry['q_token'] = tokens
-
-
-class VQAImageDataset(VQADataset):
-    def __init__(self, name, img_size, dictionary,
-                 # img_transform=None,
-                 question_transform=None,
-                 answer_transform=None,
-                 dataroot='data'):
-        super(VQAImageDataset, self).__init__()
-        assert name in ['train', 'val']
-
-        # self.img_transform = img_transform
-        self.img_transform = torchvision.transforms.Compose([
-            torchvision.transforms.Scale((img_size, img_size)),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(
-                mean=[0.5, 0.5, 0.5],
-                std=[0.5, 0.5, 0.5])
-        ])
-        self.question_transform = question_transform
-        self.answer_transform = answer_transform
-        # TODO: implement cache
-        self.dictionary = dictionary
-
-        image_folder = os.path.join(dataroot, '%s2014' % name)
-        self.images = utils.load_folder(image_folder, 'jpg')
-        self.img_id2idx = {}
-        for idx, img in enumerate(self.images):
-            img_id = int(img.split('/')[-1].split('.')[0].split('_')[-1])
-            self.img_id2idx[img_id] = idx
-        self.entries = _load_dataset(dataroot, name, self.img_id2idx)
-
-    def __getitem__(self, index):
-        entry = self.entries[index]
-        img = utils.pil_loader(entry['image'])
-        question = entry['question']
-        answer = entry['answer']
-
-        if self.img_transform is not None:
-            img = self.img_transform(img)
-        if self.question_transform is not None:
-            question = self.question_transform(question)
-        if self.answer_transform is not None:
-            answer = self.answer_transform(answer)
-
-        return img, question, answer
-
-    def __len__(self):
-        return len(self.entries)
-
-
-class VQAFeatureDataset(VQADataset):
+class VQAFeatureDataset(Dataset):
     def __init__(self, name, dictionary, dataroot='data'):
         super(VQAFeatureDataset, self).__init__()
         assert name in ['train', 'val', 'dev']
@@ -219,21 +151,51 @@ class VQAFeatureDataset(VQADataset):
                 self.features = np.array(hf.get('image_features'))
                 self.spatials = np.array(hf.get('spatial_features'))
 
+            self.det = np.load(open(os.path.join(dataroot, '%s_det.npy' % name)))
             self.entries = _load_dataset(dataroot, name, self.img_id2idx)
         else:
             self.features = np.load(os.path.join(dataroot, 'dev_features.npy'))
             self.spatials = np.load(os.path.join(dataroot, 'dev_spatials.npy'))
+            self.det = np.load(open(os.path.join(dataroot, 'dev_det.npy')))
             self.entries = cPickle.load(
                 open(os.path.join(dataroot, 'dev_entries.pkl')))
 
         self.tokenize()
+        self.convert_detection_cls()
         self.tensorize()
         self.v_dim = self.features.size(2)
         self.s_dim = self.spatials.size(2)
 
+    def tokenize(self, max_length=14):
+        """Tokenizes the questions.
+
+        This will add q_token in each entry of the dataset.
+        -1 represent nil, and should be treated as padding_idx in embedding
+        """
+        for entry in self.entries:
+            tokens = self.dictionary.tokenize(entry['question'], False)
+            tokens = tokens[:max_length]
+            if len(tokens) < max_length:
+                # TODO: note here we pad in front of the sentence
+                padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
+                tokens = padding + tokens
+            utils.assert_eq(len(tokens), max_length)
+            entry['q_token'] = tokens
+
+    def convert_detection_cls(self):
+        def map_cls(cls):
+            if cls in self.dictionary.word2idx:
+                return self.dictionary.word2idx[cls]
+            else:
+                return self.dictionary.padding_idx
+
+        vmap_cls = np.vectorize(map_cls)
+        self.det = vmap_cls(self.det)
+
     def tensorize(self):
         self.features = torch.from_numpy(self.features)
         self.spatials = torch.from_numpy(self.spatials)
+        self.det = torch.from_numpy(self.det)
 
         for entry in self.entries:
             question = torch.from_numpy(np.array(entry['q_token']))
@@ -256,8 +218,9 @@ class VQAFeatureDataset(VQADataset):
 
         features = self.features[entry['image']]
         spatials = self.spatials[entry['image']]
-        question = entry['q_token']
+        det = self.det[entry['image']]
 
+        question = entry['q_token']
         answer = entry['answer']
         labels = answer['labels']
         scores = answer['scores']
@@ -265,7 +228,7 @@ class VQAFeatureDataset(VQADataset):
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, spatials, question, target
+        return features, spatials, det, question, target
 
     def __len__(self):
         return len(self.entries)
@@ -299,9 +262,9 @@ if __name__ == '__main__':
     dataloader = torch.utils.data.DataLoader(
         dset, batch_size=100, shuffle=True, num_workers=4, drop_last=False)
 
-    t = time.time()
-    for i, (x, b, y, z) in enumerate(dataloader):
-        a = x
-        if i >= len(dataloader):
-            break
-    print('time: %.2f' % (time.time() - t))
+    # t = time.time()
+    # for i, (x, b, y, z) in enumerate(dataloader):
+    #     a = x
+    #     if i >= len(dataloader):
+    #         break
+    # print('time: %.2f' % (time.time() - t))
