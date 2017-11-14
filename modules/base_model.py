@@ -49,87 +49,11 @@ def build_baseline0(dataset, num_hid):
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
-def build_baseline0_dropout(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False,
-                              dropout=0.5)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-def build_baseline0_emb_dropout(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False,
-                              emb_dropout=0.5)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-def build_baseline0_double_dropout(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False,
-                              emb_dropout=0.2, dropout=0.5)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-def build_baseline0_double_dropout2(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 2, False,
-                              emb_dropout=0.5, dropout=0.5)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
 def build_baseline0_newatt(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = NewAttention(dataset.v_dim + dataset.s_dim, q_emb.nhid)
-    q_net = GLU(q_emb.nhid, num_hid)
+    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    v_att = NewAttention(dataset.v_dim + dataset.s_dim, q_emb.num_hid)
+    q_net = GLU(q_emb.num_hid, num_hid)
     v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-def build_baseline1(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid, num_hid)
-
-    v_net = nn.Sequential(
-        GLU(dataset.v_dim, dataset.v_dim),
-        GLU(dataset.v_dim, num_hid)
-    )
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-def build_baseline2(dataset, num_hid):
-    """2 layer attention compared with baseline1, no help"""
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, False)
-    v_att = TopDownAttention(q_emb.nhid, dataset.v_dim, num_hid, 2)
-    q_net = GLU(q_emb.nhid, num_hid)
-
-    v_net = nn.Sequential(
-        GLU(dataset.v_dim, dataset.v_dim),
-        GLU(dataset.v_dim, num_hid)
-    )
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
-
-
-# Not very useful
-def build_baseline0_bidirect(dataset, num_hid):
-    q_emb = QuestionEmbedding(dataset.dictionary.ntoken, 300, num_hid, 1, True)
-    v_att = TopDownAttention(q_emb.nhid * 2, dataset.v_dim, num_hid)
-    q_net = GLU(q_emb.nhid * 2, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(q_emb, v_att, q_net, v_net, classifier)
+    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
