@@ -135,15 +135,17 @@ class DetModel3(nn.Module):
 
         return: logits, not probs
         """
-        q_emb, q_repr, v_emb = self._baseline_forward(v, q)
-        relation_v_emb = self._relation_forward(v, b, det, q_emb)
+        q_emb, q_repr, joint_repr = self._baseline_forward(v, q)
+        relation_v_repr = self._relation_forward(v, b, det, q_emb)
+        relation_joint_repr = q_repr * relation_v_repr
 
-        v_emb = torch.cat([v_emb, relation_v_emb], 1)
-        v_repr = self.v_net(v_emb)
+        logits = self.classifier(joint_repr, relation_joint_repr)
+        # v_emb = torch.cat([v_emb, relation_v_emb], 1)
+        # v_repr = self.v_net(v_emb)
 
-        joint_repr = q_repr * v_repr #(v_repr + relation_v_repr)
+        # joint_repr = q_repr * v_repr #(v_repr + relation_v_repr)
 
-        logits = self.classifier(joint_repr)
+        # logits = self.classifier(joint_repr)
         return logits
 
     def _baseline_forward(self, v, q):
@@ -154,10 +156,10 @@ class DetModel3(nn.Module):
 
         att = self.v_att(v, q_emb).unsqueeze(2) #[batch, k, 1]
         v_emb = (att * v).sum(1) # [batch, v_dim]
-        # v_repr = self.v_net(v_emb) # [batch, num_hid]
+        v_repr = self.v_net(v_emb) # [batch, num_hid]
 
-        # joint_repr = q_repr * v_repr
-        return q_emb, q_repr, v_emb, #q_repr, v_repr#, joint_repr
+        joint_repr = q_repr * v_repr
+        return q_emb, q_repr, joint_repr
 
     def _relation_forward(self, v, b, det, q_emb):
         # relational part
@@ -167,8 +169,9 @@ class DetModel3(nn.Module):
         relation_mat = self.relation(b, q_emb)
         relation_att = torch.bmm(relation_mat, att) # [batch, k, 1]
         v_emb = (relation_att * v).sum(1)
-        # v_repr = self.v_net(v_emb)
-        return v_emb
+        v_repr = self.v_net(v_emb)
+
+        return v_repr
 
 
 def build_det1(dataset, num_hid):
@@ -200,11 +203,11 @@ def build_det3(dataset, num_hid):
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
     v_att = NewAttention(dataset.v_dim, num_hid)
     q_net = GLU(num_hid, num_hid)
-    v_net = GLU(dataset.v_dim * 2, num_hid)
+    v_net = GLU(dataset.v_dim, num_hid)
 
     vw_att = NewAttention(300, num_hid)
     relation = RelationModule(dataset.s_dim, num_hid, 128)
 
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    classifier = DualClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
 
     return DetModel3(w_emb, q_emb, v_att, q_net, v_net, vw_att, relation, classifier)
