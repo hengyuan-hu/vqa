@@ -35,7 +35,6 @@ class RelationModule(nn.Module):
 
         vi = v.unsqueeze(1).repeat(1, k, 1, 1)
         vj = v.unsqueeze(2).repeat(1, 1, k, 1)
-        # vj = vj - vi
         v_cat = torch.cat([vi, vj], 3)
         v_proj = self.v_proj(v_cat) # [batch, k, k, hid]
         q_proj = self.q_proj(q) # [batch, hid]
@@ -48,19 +47,6 @@ class RelationModule(nn.Module):
         logits = self.linear(joint_repr).squeeze(3) # [batch, k, k]
         w = softmax(logits, 1)
         return w
-
-        # # make the diagnal 0
-        # a = 1 - torch.eye(k).unsqueeze(0).expand_as(logits)
-        # a = Variable(a).cuda()
-        # # remove diagnal
-        # logits = logits * a
-        # # add large negative value to diagnal
-        # a = (1 - a) * (-1e30)
-        # logits = logits + a
-
-        # w = nn.functional.softmax(logits.view(batch*k, k))
-        # w = w.view(batch, k, k)
-        # return w
 
 
 if __name__ == '__main__':
