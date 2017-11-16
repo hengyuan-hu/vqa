@@ -4,7 +4,7 @@ from torch.autograd import Variable
 from top_down_attention import TopDownAttention
 from attention import NewAttention, UniAttention
 from language_model import WordEmbedding, QuestionEmbedding
-from glu import GLU
+# from glu import GLU
 from classifier import SimpleClassifier, DualClassifier
 from relation import RelationModule
 from torch.nn.utils.weight_norm import weight_norm

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.weight_norm import weight_norm
 from torch.autograd import Variable
-from glu import GLU
+# from glu import GLU
 import numpy as np
 
 

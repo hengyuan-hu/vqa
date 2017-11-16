@@ -17,5 +17,5 @@ class FCNet(nn.Module):
 
         self.main = nn.Sequential(*layers)
 
-  def forward(self, x):
-      return self.main(x)
+    def forward(self, x):
+        return self.main(x)
