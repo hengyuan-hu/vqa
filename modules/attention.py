@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils.weight_norm import weight_norm
-from glu import GLU
 import numpy as np
 
 
@@ -14,9 +13,9 @@ class Attention(nn.Module):
     def __init__(self, in_dim, hidden_dim, num_layers):
         super(Attention, self).__init__()
 
-        layers = [GLU(in_dim, hidden_dim)]
+        layers = [weight_norm(nn.Linear(in_dim, hidden_dim), dim=None)]
         for i in range(1, num_layers):
-            layers.append(GLU(hidden_dim, hidden_dim))
+            layers.append(weight_norm(hidden_dim, hidden_dim), dim=None)
 
         self.nonlinear = nn.Sequential(*layers)
         self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)

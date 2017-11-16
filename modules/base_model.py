@@ -5,6 +5,8 @@ from attention import NewAttention
 from language_model import WordEmbedding, QuestionEmbedding
 from glu import GLU
 from classifier import SimpleClassifier
+from torch.nn.utils.weight_norm import weight_norm
+from fc import FCNet
 
 
 class BaseModel(nn.Module):
@@ -77,38 +79,33 @@ class DetBaseModel(nn.Module):
         return logits
 
 
-
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
     v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim, num_hid)
-    # v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim + dataset.s_dim, num_hid)
-    q_net = GLU(q_emb.num_hid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    # v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    q_net = FCNet([num_hid, num_hid, num_hid], 0.5)
+    v_net = FCNet([dataset.v_dim, num_hid, num_hid], 0.5)
+    classifier = SimpleClassifier(num_hid, num_hid, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
-def build_baseline0_newatt(dataset, num_hid):
-    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
-    v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
-    # v_att = NewAttention(dataset.v_dim + dataset.s_dim, q_emb.num_hid)
-    q_net = GLU(q_emb.num_hid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    # v_net = GLU(dataset.v_dim + dataset.s_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
+# def build_baseline0_newatt(dataset, num_hid):
+#     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+#     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+#     v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
+#     q_net = GLU(q_emb.num_hid, num_hid)
+#     v_net = GLU(dataset.v_dim, num_hid)
+#     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+#     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
-def build_det_baseline0(dataset, num_hid):
-    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
-    v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
-    det_att = TopDownAttention(q_emb.num_hid, 300, num_hid)
-    # det_att = NewAttention(300, q_emb.num_hid)
-    q_net = GLU(q_emb.num_hid, num_hid)
-    v_net = GLU(dataset.v_dim, num_hid)
-    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return DetBaseModel(w_emb, q_emb, v_att, det_att, q_net, v_net, classifier)
+# def build_det_baseline0(dataset, num_hid):
+#     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+#     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+#     v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
+#     det_att = TopDownAttention(q_emb.num_hid, 300, num_hid)
+#     # det_att = NewAttention(300, q_emb.num_hid)
+#     q_net = GLU(q_emb.num_hid, num_hid)
+#     v_net = GLU(dataset.v_dim, num_hid)
+#     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+#     return DetBaseModel(w_emb, q_emb, v_att, det_att, q_net, v_net, classifier)
