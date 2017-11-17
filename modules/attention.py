@@ -16,6 +16,7 @@ class Attention(nn.Module):
         layers = [weight_norm(nn.Linear(in_dim, hidden_dim), dim=None)]
         for i in range(1, num_layers):
             layers.append(weight_norm(hidden_dim, hidden_dim), dim=None)
+            layers.append(ReLU())
 
         self.nonlinear = nn.Sequential(*layers)
         self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)
