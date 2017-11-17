@@ -30,16 +30,16 @@ class RelationModule(nn.Module):
             weight_norm(nn.Linear(4, 16), dim=None),
             nn.ReLU())
 
-        # self.v_proj = nn.Sequential(
-        #     weight_norm(nn.Linear(num_channels * 4, num_channels * 4), dim=None),
-        #     nn.ReLU())
+        self.v_proj = nn.Sequential(
+            weight_norm(nn.Linear(256, 128), dim=None),
+            nn.ReLU())
 
         self.q_proj = nn.Sequential(
-            weight_norm(nn.Linear(q_dim, 256), dim=None),
+            weight_norm(nn.Linear(q_dim, 128), dim=None),
             nn.ReLU())
 
         self.dropout = nn.Dropout(0.5)
-        self.linear = weight_norm(nn.Linear(256, 1), dim=None)
+        self.linear = weight_norm(nn.Linear(128, 1), dim=None)
 
     def forward(self, v, q):
         """
@@ -54,11 +54,11 @@ class RelationModule(nn.Module):
         # print v_stack.size()
         v_conv = self.v_conv(v_stack) # [batch, k, k, 4, 32]
         v_conv = v_conv.transpose(3, 4)
-        v_proj = self.v_conv2(v_conv).view(batch, k, k, -1)
+        v_conv = self.v_conv2(v_conv).view(batch, k, k, -1)
 
         # v_conv = v_conv.view(batch, k, k, -1) # [batch, k, k, 128]
         # # print v_conv.size()
-        # v_proj = self.v_proj(v_conv) # [batch, k, k, hid]
+        v_proj = self.v_proj(v_conv) # [batch, k, k, hid]
 
         q_proj = self.q_proj(q) # [batch, hid]
         q_proj = q_proj.unsqueeze(1).unsqueeze(1).expand_as(v_proj)
