@@ -24,14 +24,14 @@ class RelationModule(nn.Module):
 
         # num_channels = 32
         self.v_conv = nn.Sequential(
-            weight_norm(nn.Linear(2, 16), dim=None),
+            weight_norm(nn.Linear(2, 32), dim=None),
             nn.ReLU())
         self.v_conv2 = nn.Sequential(
-            weight_norm(nn.Linear(4, 16), dim=None),
+            weight_norm(nn.Linear(4, 4), dim=None),
             nn.ReLU())
 
         self.v_proj = nn.Sequential(
-            weight_norm(nn.Linear(256, 128), dim=None),
+            weight_norm(nn.Linear(128, 128), dim=None),
             nn.ReLU())
 
         self.q_proj = nn.Sequential(
