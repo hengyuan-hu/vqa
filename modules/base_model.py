@@ -82,9 +82,9 @@ def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
     v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim, num_hid)
-    q_net = FCNet([num_hid, num_hid, num_hid], 0.5)
-    v_net = FCNet([dataset.v_dim, num_hid, num_hid], 0.5)
-    classifier = SimpleClassifier(num_hid, num_hid, dataset.num_ans_candidates)
+    q_net = FCNet([num_hid, num_hid], 0)
+    v_net = FCNet([dataset.v_dim, num_hid], 0)
+    classifier = SimpleClassifier(num_hid, 2 * num_hid, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 

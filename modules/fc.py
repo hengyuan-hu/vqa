@@ -12,9 +12,10 @@ class FCNet(nn.Module):
             out_dim = dims[i+1]
             layers.append(weight_norm(nn.Linear(in_dim, out_dim), dim=None))
             layers.append(nn.ReLU())
-        if len(dims) > 2 and dropout:
-            layers.append(nn.Dropout(0.5))
+        # if len(dims) > 2 and dropout:
+        #     layers.append(nn.Dropout(0.5))
         layers.append(weight_norm(nn.Linear(dims[-2], dims[-1]), dim=None))
+        layers.append(nn.ReLU())
 
         self.main = nn.Sequential(*layers)
 
