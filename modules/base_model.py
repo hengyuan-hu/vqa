@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from top_down_attention import TopDownAttention
-from attention import NewAttention
+from attention import *
 from language_model import WordEmbedding, QuestionEmbedding
 from classifier import SimpleClassifier
 from torch.nn.utils.weight_norm import weight_norm
@@ -81,21 +81,31 @@ class DetBaseModel(nn.Module):
 def build_baseline0(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
-    v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim, num_hid)
+    v_att = TopDownAttention(q_emb.num_hid, dataset.v_dim, num_hid, 2)
     q_net = FCNet([num_hid, num_hid], 0)
     v_net = FCNet([dataset.v_dim, num_hid], 0)
     classifier = SimpleClassifier(num_hid, 2 * num_hid, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
-# def build_baseline0_newatt(dataset, num_hid):
-#     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-#     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
-#     v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
-#     q_net = GLU(q_emb.num_hid, num_hid)
-#     v_net = GLU(dataset.v_dim, num_hid)
-#     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-#     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
+def build_baseline0_newatt(dataset, num_hid):
+    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    v_att = NewAttention(dataset.v_dim, q_emb.num_hid)
+    q_net = FCNet([q_emb.num_hid, num_hid], 0)
+    v_net = FCNet([dataset.v_dim, num_hid], 0)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
+
+
+def build_baseline0_newatt2(dataset, num_hid):
+    w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
+    v_att = NewAttention2(dataset.v_dim, q_emb.num_hid, num_hid)
+    q_net = FCNet([q_emb.num_hid, num_hid], 0)
+    v_net = FCNet([dataset.v_dim, num_hid], 0)
+    classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
+    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
 
 
 # def build_det_baseline0(dataset, num_hid):

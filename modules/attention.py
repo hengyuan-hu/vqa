@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils.weight_norm import weight_norm
 import numpy as np
+from fc import FCNet
 
 
 class Attention(nn.Module):
@@ -14,9 +15,10 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
 
         layers = [weight_norm(nn.Linear(in_dim, hidden_dim), dim=None)]
+        layers.append(nn.ReLU())
         for i in range(1, num_layers):
-            layers.append(weight_norm(hidden_dim, hidden_dim), dim=None)
-            layers.append(ReLU())
+            layers.append(weight_norm(nn.Linear(hidden_dim, hidden_dim), dim=None))
+            layers.append(nn.ReLU())
 
         self.nonlinear = nn.Sequential(*layers)
         self.linear = weight_norm(nn.Linear(hidden_dim, 1), dim=None)
@@ -94,10 +96,48 @@ class NewAttention(nn.Module):
 
     def logits(self, v, q):
         batch, k, _ = v.size()
-        v_proj = self.v_proj(v) # [batch * k, qdim]
+        v_proj = self.v_proj(v) # [batch, k, qdim]
         q_expand = q.unsqueeze(1).repeat(1, k, 1)
         joint_repr = v_proj * q_expand
         joint_repr = nn.functional.normalize(joint_repr, 2, 2)
+
+        logits = self.linear(joint_repr).view(batch, k)
+        return logits
+
+
+class NewAttention2(nn.Module):
+    '''
+    Generic attention modules that computes a soft attention distribution
+    over a set of objects.
+    '''
+
+    def __init__(self, v_dim, q_dim, num_hid):
+        super(NewAttention2, self).__init__()
+
+        # self.v_proj = weight_norm(nn.Linear(v_dim, q_dim), dim=None)
+        # self.linear = weight_norm(nn.Linear(q_dim, 1), dim=None)
+        self.v_proj = FCNet([v_dim, num_hid], 0)
+        self.q_proj = FCNet([q_dim, num_hid], 0)
+        self.dropout = nn.Dropout(0.2)
+        self.linear = weight_norm(nn.Linear(q_dim, 1), dim=None)
+
+    def forward(self, v, q):
+        """
+        v: [batch, k, vdim]
+        q: [batch, qdim]
+        """
+        logits = self.logits(v, q)
+        w = nn.functional.softmax(logits)
+        return w
+
+    def logits(self, v, q):
+        batch, k, _ = v.size()
+        v_proj = self.v_proj(v) # [batch, k, qdim]
+        q_proj = self.q_proj(q).unsqueeze(1).repeat(1, k, 1)
+        # q_expand = q.unsqueeze(1).repeat(1, k, 1)
+        joint_repr = v_proj * q_proj
+        joint_repr = self.dropout(joint_repr)
+        # joint_repr = nn.functional.normalize(joint_repr, 2, 2)
 
         logits = self.linear(joint_repr).view(batch, k)
         return logits
