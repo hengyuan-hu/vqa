@@ -119,7 +119,7 @@ class NewAttention2(nn.Module):
         self.v_proj = FCNet([v_dim, num_hid], 0)
         self.q_proj = FCNet([q_dim, num_hid], 0)
         self.dropout = nn.Dropout(0.2)
-        self.linear = weight_norm(nn.Linear(q_dim, 1), dim=None)
+        self.linear = weight_norm(nn.Linear(num_hid, 1), dim=None)
 
     def forward(self, v, q):
         """
@@ -138,6 +138,5 @@ class NewAttention2(nn.Module):
         joint_repr = v_proj * q_proj
         joint_repr = self.dropout(joint_repr)
         # joint_repr = nn.functional.normalize(joint_repr, 2, 2)
-
         logits = self.linear(joint_repr).view(batch, k)
         return logits

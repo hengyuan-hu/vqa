@@ -72,7 +72,7 @@ class QuestionEmbedding(nn.Module):
         backward = output[:, 0, self.num_hid:]
         return torch.cat((forward_, backward), dim=1)
 
-    def forward_allout(self, x):
+    def forward_all(self, x):
         # x: [batch, sequence, in_dim]
         batch = x.size(0)
         hidden = self.init_hidden(batch)

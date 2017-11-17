@@ -11,6 +11,7 @@ from dataset import Dictionary, VQAFeatureDataset, VQAFilteredDataset
 from modules import base_model
 from modules import relation_model
 from modules import det_model
+from modules import wemb_model
 from train import train
 import utils
 from collections import OrderedDict
@@ -59,6 +60,8 @@ if __name__ == '__main__':
     func_name = 'build_%s' % args.model
     if 'baseline' in args.model:
         model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
+    if 'wemb' in args.model:
+        model = getattr(wemb_model, func_name)(train_dset, args.num_hid).cuda()
     elif 'rm' in args.model:
         model = getattr(relation_model, func_name)(train_dset, args.num_hid).cuda()
     elif 'det' in args.model:
