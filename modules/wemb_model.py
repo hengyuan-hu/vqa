@@ -18,7 +18,7 @@ class BaseModel(nn.Module):
         self.v_net = v_net
         self.classifier = classifier
 
-        self.q_att = UniAttention(self.q_emb.num_hid * self.q_emb.ndirections)
+        self.w_att = UniAttention(self.q_emb.num_hid * self.q_emb.ndirections)
 
     def forward(self, v, b, det, q, labels):
         """Forward
@@ -31,12 +31,12 @@ class BaseModel(nn.Module):
         """
         w_emb = self.w_emb(q)
         q_emb = self.q_emb.forward_all(w_emb) # [batch, seq_length, q_dim]
-        q_att = self.q_att(q_emb).unsqueeze(2)
-        q_emb = (w_emb * q_att).sum(1)
-        q_repr = self.q_net(q_emb)
+        w_att = self.w_att(q_emb).unsqueeze(2)
+        w_emb = (w_emb * w_att).sum(1)
+        q_repr = self.q_net(q_emb[:, -1])
 
         # v = torch.cat([v, b], 2)
-        att = self.v_att(v, q_emb).unsqueeze(2).expand_as(v)
+        att = self.v_att(v, w_emb).unsqueeze(2).expand_as(v)
         v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
         joint_repr = q_repr * v_repr
@@ -46,9 +46,9 @@ class BaseModel(nn.Module):
 
 def build_wemb_newatt2(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
-    q_emb = QuestionEmbedding(300, num_hid, 1, True, 0.0)
+    q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
     v_att = NewAttention2(dataset.v_dim, 300, num_hid)
-    q_net = FCNet([300, num_hid], 0)
+    q_net = FCNet([num_hid, num_hid], 0)
     v_net = FCNet([dataset.v_dim, num_hid], 0)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
     return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
