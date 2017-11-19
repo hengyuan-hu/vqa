@@ -60,14 +60,14 @@ if __name__ == '__main__':
     func_name = 'build_%s' % args.model
     if 'baseline' in args.model:
         model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
-    if 'wemb' in args.model:
+    elif 'wemb' in args.model:
         model = getattr(wemb_model, func_name)(train_dset, args.num_hid).cuda()
     elif 'rm' in args.model:
         model = getattr(relation_model, func_name)(train_dset, args.num_hid).cuda()
     elif 'det' in args.model:
         model = getattr(det_model, func_name)(train_dset, args.num_hid).cuda()
     else:
-        assert False, 'invalid'
+        assert False, 'invalid model'
 
     # seems not necessary
     # utils.init_net(model, None)
