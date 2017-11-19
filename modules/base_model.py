@@ -9,11 +9,10 @@ from fc import FCNet
 
 
 class BaseModel(nn.Module):
-    def __init__(self, w_emb, q_emb, v_emb, v_att, q_net, v_net, classifier):
+    def __init__(self, w_emb, q_emb, v_att, q_net, v_net, classifier):
         super(BaseModel, self).__init__()
         self.w_emb = w_emb
         self.q_emb = q_emb
-        self.v_emb = v_emb
         self.v_att = v_att
         self.q_net = q_net
         self.v_net = v_net
@@ -33,7 +32,6 @@ class BaseModel(nn.Module):
         q_repr = self.q_net(q_emb)
 
         # v = torch.cat([v, b], 2)
-        v = self.v_emb(v)
         att = self.v_att(v, q_emb).unsqueeze(2).expand_as(v)
         v_emb = (att * v).sum(1) # [batch, v_dim]
         v_repr = self.v_net(v_emb)
@@ -65,9 +63,8 @@ def build_baseline0_newatt(dataset, num_hid):
 def build_baseline0_newatt2(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
-    v_emb = FCNet([dataset.v_dim, num_hid], 0)
-    v_att = NewAttention2(num_hid, q_emb.num_hid, num_hid)
+    v_att = NewAttention2(dataset.v_dim, q_emb.num_hid, num_hid)
     q_net = FCNet([q_emb.num_hid, num_hid], 0)
-    v_net = FCNet([num_hid, num_hid], 0)
+    v_net = FCNet([dataset.v_dim, num_hid], 0)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return BaseModel(w_emb, q_emb, v_emb, v_att, q_net, v_net, classifier)
+    return BaseModel(w_emb, q_emb, v_att, q_net, v_net, classifier)
