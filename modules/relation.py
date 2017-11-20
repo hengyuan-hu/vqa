@@ -46,10 +46,8 @@ class RelationModule(nn.Module):
         vi = v.unsqueeze(1).repeat(1, k, 1, 1)
         vj = v.unsqueeze(2).repeat(1, 1, k, 1)
         v_stack = torch.stack([vi, vj], 4) # [batch, k, k, 4, 2]
-        # print v_stack.size()
         v_conv = self.v_conv(v_stack) # [batch, k, k, 4, 32]
         v_conv = v_conv.view(batch, k, k, -1) # [batch, k, k, 128]
-        # print v_conv.size()
         v_proj = self.v_proj(v_conv) # [batch, k, k, hid]
 
         q_proj = self.q_proj(q) # [batch, hid]
@@ -59,7 +57,6 @@ class RelationModule(nn.Module):
 
         joint_repr = v_proj * q_proj
         joint_repr = self.dropout(joint_repr)
-        # print joint_repr.size()
         # joint_repr = nn.functional.normalize(joint_repr, 2, 3)
         logits = self.linear(joint_repr).squeeze(3) # [batch, k, k]
         w = softmax(logits, 1)

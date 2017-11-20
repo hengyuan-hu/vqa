@@ -52,9 +52,10 @@ class RelationModel0(nn.Module):
         return logits
 
 
-class RelationModel1(nn.Module):
-    def __init__(self, w_emb, q_emb, v_att, relation, q_net, v_net, classifier):
-        super(RelationModel1, self).__init__()
+class RelationModelDual(nn.Module):
+    def __init__(self, w_emb, q_emb, v_att, relation, q_net, v_net, final_att,
+                 classifier):
+        super(RelationModelDual, self).__init__()
         self.w_emb = w_emb
         self.q_emb = q_emb
         self.v_att = v_att
@@ -63,9 +64,7 @@ class RelationModel1(nn.Module):
         self.classifier = classifier
 
         self.relation = relation
-
-        self.w_sem_att = UniAttention(self.q_emb.num_hid * self.q_emb.ndirections)
-        self.w_rel_att = UniAttention(self.q_emb.num_hid * self.q_emb.ndirections)
+        self.final_att = final_att
 
     def forward(self, v, b, det, q, labels):
         """Forward
@@ -77,22 +76,23 @@ class RelationModel1(nn.Module):
         return: logits, not probs
         """
         w_emb = self.w_emb(q)
-        q_emb = self.q_emb.forward_all(w_emb)
-        q_repr = self.q_net(q_emb[:, -1])
+        q_emb = self.q_emb(w_emb)
+        q_repr = self.q_net(q_emb)
 
-        w_sem_att = self.w_sem_att(q_emb).unsqueeze(2)
-        w_sem_emb = (w_emb * w_sem_att).sum(1)
-        w_rel_att = self.w_rel_att(q_emb).unsqueeze(2)
-        w_rel_emb = (w_emb * w_rel_att).sum(1)
-
-        v_att = self.v_att(v, w_sem_emb).unsqueeze(2) # [batch, k, 1]
+        v_att = self.v_att(v, q_emb).unsqueeze(2) # [batch, k, 1]
         b = b[:, :, :4] # area is not used
-        relation_matrix = self.relation(b, w_rel_emb) # [batch, k, k]
+        relation_matrix = self.relation(b, q_emb) # [batch, k, k]
         prop_att = torch.bmm(relation_matrix, v_att) # [batch, k, 1]
 
+        sv_emb = (v_att * v).sum(1) # [batch, v_dim]
+        sv_repr = self.v_net(sv_emb)
         rv_emb = (prop_att * v).sum(1)
         rv_repr = self.v_net(rv_emb)
-        joint_repr = q_repr * rv_repr
+
+        v_repr = torch.stack([sv_repr, rv_repr], 1)
+        final_v_att = self.final_att(v_repr, q_emb).unsqueeze(2)
+        v_repr = (v_repr * final_v_att).sum(1)
+        joint_repr = q_repr * v_repr
 
         # joint_repr = q_repr * (v_repr + rv_repr)
         logits = self.classifier(joint_repr)
@@ -111,13 +111,15 @@ def build_rm0(dataset, num_hid):
     return RelationModel0(w_emb, q_emb, v_att, relation, q_net, v_net, classifier)
 
 
-def build_rm1(dataset, num_hid):
+def build_rmd(dataset, num_hid):
     w_emb = WordEmbedding(dataset.dictionary.ntoken, 300, 0.0)
     q_emb = QuestionEmbedding(300, num_hid, 1, False, 0.0)
 
-    v_att = NewAttention2(dataset.v_dim, 300, num_hid)
-    relation = RelationModule(None, 300, None)
+    v_att = NewAttention2(dataset.v_dim, q_emb.num_hid, num_hid)
+    relation = RelationModule(None, q_emb.num_hid, None)
     q_net = FCNet([q_emb.num_hid, num_hid], 0)
     v_net = FCNet([dataset.v_dim, num_hid], 0)
+    final_v_att = NewAttention2(num_hid, q_emb.num_hid, num_hid)
     classifier = SimpleClassifier(num_hid, num_hid * 2, dataset.num_ans_candidates)
-    return RelationModel1(w_emb, q_emb, v_att, relation, q_net, v_net, classifier)
+    return RelationModelDual(
+        w_emb, q_emb, v_att, relation, q_net, v_net, final_v_att, classifier)
