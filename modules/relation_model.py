@@ -40,14 +40,12 @@ class RelationModel0(nn.Module):
         relation_matrix = self.relation(b, q_emb) # [batch, k, k]
         prop_att = torch.bmm(relation_matrix, v_att) # [batch, k, 1]
 
-        # v_emb = (sementic_att * v).sum(1) # [batch, v_dim]
-        # v_repr = self.v_net(v_emb)
+        v_att = v_att + prop_att
 
-        rv_emb = (prop_att * v).sum(1)
-        rv_repr = self.v_net(rv_emb)
-        joint_repr = q_repr * rv_repr
+        v_emb = (v_att * v).sum(1)
+        v_repr = self.v_net(v_emb)
+        joint_repr = q_repr * v_repr
 
-        # joint_repr = q_repr * (v_repr + rv_repr)
         logits = self.classifier(joint_repr)
         return logits
 
