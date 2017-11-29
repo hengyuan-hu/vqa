@@ -69,7 +69,8 @@ class RelationAttention(nn.Module):
     def __init__(self, v_dim, q_dim, num_hid):
         super(RelationAttention, self).__init__()
 
-        self.v_proj = FCNet([v_dim, num_hid], 0)
+        self.vi_proj = FCNet([v_dim, num_hid], 0)
+        self.vj_proj = FCNet([v_dim, num_hid], 0)
         self.q_proj = FCNet([q_dim, num_hid], 0)
         self.num_hid = num_hid
 
@@ -77,7 +78,7 @@ class RelationAttention(nn.Module):
         #     weight_norm(nn.Linear(q_dim, 128), dim=None),
         #     nn.ReLU())
 
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.5)
         self.linear = weight_norm(nn.Linear(num_hid, 1), dim=None)
 
     def forward(self, v, q):
@@ -87,9 +88,10 @@ class RelationAttention(nn.Module):
         """
         batch, k, v_dim = v.size()
 
-        v_proj = self.v_proj(v)
-        vi = v_proj.unsqueeze(1).expand(batch, k, k, self.num_hid)
-        vj = v_proj.unsqueeze(2).expand(batch, k, k, self.num_hid)
+        vi_proj = self.vi_proj(v)
+        vj_proj = self.vj_proj(v)
+        vi = vi_proj.unsqueeze(1).expand(batch, k, k, self.num_hid)
+        vj = vj_proj.unsqueeze(2).expand(batch, k, k, self.num_hid)
         v_proj = vi + vj # [batch, k, k, num_hid]
 
         q_proj = self.q_proj(q) # [batch, hid]
