@@ -62,7 +62,7 @@ class RelationModule(nn.Module):
         # print joint_repr.size()
         # joint_repr = nn.functional.normalize(joint_repr, 2, 3)
         logits = self.linear(joint_repr).squeeze(3) # [batch, k, k]
-        w = softmax(logits, 2)
+        w = softmax(logits, 1)
         return w
 
 
