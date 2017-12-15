@@ -7,3 +7,4 @@ task.sh
 *.npy
 *.txt
 models/
+saved_models/
