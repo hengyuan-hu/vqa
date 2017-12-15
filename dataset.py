@@ -6,7 +6,6 @@ import utils
 import h5py
 import torch
 from torch.utils.data import Dataset
-import torchvision
 
 
 class Dictionary(object):
@@ -60,33 +59,6 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-class Corpus(object):
-    def __init__(self, train, valid):
-        self.dictionary = Dictionary()
-        self.train = self.tokenize(train)
-        self.valid = self.tokenize(valid)
-
-    def tokenize(self, qset):
-        """Tokenizes a question set (list of strings)."""
-        tokens = 0
-        ids = []
-        for q in qset:
-            q = q.replace(',', '').replace('?', '').replace('\'s', ' \'s')
-            words = q.split() + [u'<eos>']
-            tokens += len(words)
-            for word in words:
-                ids.append(self.dictionary.add_word(word))
-
-        return np.array(ids)
-
-
-class PTBCorpus(Corpus):
-    def __init__(self, dataroot='data/penn'):
-        train = open(os.path.join(dataroot, 'train.txt')).readlines()
-        valid = open(os.path.join(dataroot, 'valid.txt')).readlines()
-        super(PTBCorpus, self).__init__(train, valid)
-
-
 def _create_entry(img, question, answer):
     answer.pop('image_id')
     answer.pop('question_id')
@@ -110,10 +82,6 @@ def _load_dataset(dataroot, name, img_id2val):
         dataroot, 'v2_OpenEnded_mscoco_%s2014_questions.json' % name)
     questions = sorted(json.load(open(question_path))['questions'],
                        key=lambda x: x['question_id'])
-    # answer_path = os.path.join(
-    #     dataroot, 'v2_mscoco_%s2014_annotations.json' % name)
-    # answers = sorted(json.load(open(answer_path))['annotations'],
-    #                  key=lambda x: x['question_id'])
     answer_path = os.path.join(dataroot, 'cache', '%s_target.pkl' % name)
     answers = cPickle.load(open(answer_path, 'rb'))
     answers = sorted(answers, key=lambda x: x['question_id'])
@@ -151,17 +119,14 @@ class VQAFeatureDataset(Dataset):
                 self.features = np.array(hf.get('image_features'))
                 self.spatials = np.array(hf.get('spatial_features'))
 
-            self.det = np.load(open(os.path.join(dataroot, '%s_det.npy' % name)))
             self.entries = _load_dataset(dataroot, name, self.img_id2idx)
         else:
             self.features = np.load(os.path.join(dataroot, 'dev_features.npy'))
             self.spatials = np.load(os.path.join(dataroot, 'dev_spatials.npy'))
-            self.det = np.load(open(os.path.join(dataroot, 'dev_det.npy')))
             self.entries = cPickle.load(
                 open(os.path.join(dataroot, 'dev_entries.pkl')))
 
         self.tokenize()
-        self.convert_detection_cls()
         self.tensorize()
         self.v_dim = self.features.size(2)
         self.s_dim = self.spatials.size(2)
@@ -176,26 +141,15 @@ class VQAFeatureDataset(Dataset):
             tokens = self.dictionary.tokenize(entry['question'], False)
             tokens = tokens[:max_length]
             if len(tokens) < max_length:
-                # TODO: note here we pad in front of the sentence
+                # Note here we pad in front of the sentence
                 padding = [self.dictionary.padding_idx] * (max_length - len(tokens))
                 tokens = padding + tokens
             utils.assert_eq(len(tokens), max_length)
             entry['q_token'] = tokens
 
-    def convert_detection_cls(self):
-        def map_cls(cls):
-            if cls in self.dictionary.word2idx:
-                return self.dictionary.word2idx[cls]
-            else:
-                return self.dictionary.padding_idx
-
-        vmap_cls = np.vectorize(map_cls)
-        self.det = vmap_cls(self.det)
-
     def tensorize(self):
         self.features = torch.from_numpy(self.features)
         self.spatials = torch.from_numpy(self.spatials)
-        self.det = torch.from_numpy(self.det)
 
         for entry in self.entries:
             question = torch.from_numpy(np.array(entry['q_token']))
@@ -215,10 +169,8 @@ class VQAFeatureDataset(Dataset):
 
     def __getitem__(self, index):
         entry = self.entries[index]
-
         features = self.features[entry['image']]
         spatials = self.spatials[entry['image']]
-        det = self.det[entry['image']]
 
         question = entry['q_token']
         answer = entry['answer']
@@ -228,43 +180,14 @@ class VQAFeatureDataset(Dataset):
         if labels is not None:
             target.scatter_(0, labels, scores)
 
-        return features, spatials, det, question, target
+        return features, spatials, question, target
 
     def __len__(self):
         return len(self.entries)
 
 
-class VQAFilteredDataset(Dataset):
-
-    def __init__(self, dset, filter_fun):
-        super(VQAFilteredDataset, self).__init__()
-
-        self.dset = dset
-        self.indices = []
-
-        for i in xrange(len(dset.entries)):
-            entry = dset.entries[i]
-            if filter_fun(entry):
-                self.indices += [i]
-
-    def __getitem__(self, index):
-        return self.dset[self.indices[index]]
-
-    def __len__(self):
-        return len(self.indices)
-
-
 if __name__ == '__main__':
-    import time
-
     dictionary = Dictionary.load_from_file('data/dictionary.pkl')
     dset = VQAFeatureDataset('dev', dictionary)
     dataloader = torch.utils.data.DataLoader(
         dset, batch_size=100, shuffle=True, num_workers=4, drop_last=False)
-
-    # t = time.time()
-    # for i, (x, b, y, z) in enumerate(dataloader):
-    #     a = x
-    #     if i >= len(dataloader):
-    #         break
-    # print('time: %.2f' % (time.time() - t))

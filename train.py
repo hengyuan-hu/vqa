@@ -22,8 +22,7 @@ def compute_score_with_logits(logits, labels):
     return scores
 
 
-def train(model, train_loader, eval_loaders, num_epochs, output):
-    # optim = torch.optim.Adam(model.parameters())
+def train(model, train_loader, eval_loader, num_epochs, output):
     optim = torch.optim.Adamax(model.parameters())
     logger = utils.Logger(os.path.join(output, 'log.txt'))
     best_eval_score = 0
@@ -33,15 +32,13 @@ def train(model, train_loader, eval_loaders, num_epochs, output):
         train_score = 0
         t = time.time()
 
-        for i, (v, b, det, q, a) in enumerate(train_loader):
+        for i, (v, b, q, a) in enumerate(train_loader):
             v = Variable(v).cuda()
             b = Variable(b).cuda()
-            det = Variable(det).cuda()
             q = Variable(q).cuda()
             a = Variable(a).cuda()
 
-            pred = model(v, b, det, q, a)
-
+            pred = model(v, b, q, a)
             loss = instance_bce_with_logits(pred, a)
             loss.backward()
             nn.utils.clip_grad_norm(model.parameters(), 0.25)
@@ -54,38 +51,32 @@ def train(model, train_loader, eval_loaders, num_epochs, output):
 
         total_loss /= len(train_loader.dataset)
         train_score = 100 * train_score / len(train_loader.dataset)
-        logger.append('\ttrain_loss: %.2f, score: %.2f' % (total_loss, train_score))
+        model.train(False)
+        eval_score, bound = evaluate(model, eval_loader)
+        model.train(True)
 
-        for eval_name in eval_loaders:
-            loader = eval_loaders[eval_name]
-            score, bound = evaluate(model, loader)
-            logger.append(
-                '\t%s_score: %.2f (%.2f)' % (eval_name, 100 * score, 100 * bound))
-            if eval_name == 'eval' and score > best_eval_score:
-                model_path = os.path.join(output, 'model.pth')
-                torch.save(model.state_dict(), model_path)
+        logger.write('epoch %d, time: %.2f' % (epoch, time.time()-t))
+        logger.write('\ttrain_loss: %.2f, score: %.2f' % (total_loss, train_score))
+        logger.write('\teval score: %.2f (%.2f)' % (100 * eval_score, 100 * bound))
 
-        print logger.log('epoch %d, time: %.2f' % (epoch, time.time()-t))
+        if eval_score > best_eval_score:
+            model_path = os.path.join(output, 'model.pth')
+            torch.save(model.state_dict(), model_path)
 
 
 def evaluate(model, dataloader):
-    model.train(False)
-
     score = 0
     upper_bound = 0
     num_data = 0
-    for v, b, det, q, a in iter(dataloader):
+    for v, b, q, a in iter(dataloader):
         v = Variable(v, volatile=True).cuda()
         b = Variable(b, volatile=True).cuda()
-        det = Variable(det, volatile=True).cuda()
         q = Variable(q, volatile=True).cuda()
-        pred = model(v, b, det, q, None)
+        pred = model(v, b, q, None)
         batch_score = compute_score_with_logits(pred, a.cuda()).sum()
         score += batch_score
         upper_bound += (a.max(1)[0]).sum()
         num_data += pred.size(0)
-
-    model.train(True)
 
     score = score / len(dataloader.dataset)
     upper_bound = upper_bound / len(dataloader.dataset)

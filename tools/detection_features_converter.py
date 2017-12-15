@@ -1,40 +1,29 @@
-#!/usr/bin/env python
-
-'''
-Reads in a tsv file with pre-trained bottom up attention features and stores it in HDF5 format.
-Also store {image_id: feature_idx} dictinoary as a pickle file.
+"""
+Reads in a tsv file with pre-trained bottom up attention features and
+stores it in HDF5 format.  Also store {image_id: feature_idx}
+dictinoary as a pickle file.
 
 Hierarchy of HDF5 file:
 
-{
-  'image_features': num_images x num_boxes x 2048 array of features
-  'image_bb': num_images x num_boxes x 4 array of bounding boxes
-}
-'''
+{ 'image_features': num_images x num_boxes x 2048 array of features
+  'image_bb': num_images x num_boxes x 4 array of bounding boxes }
+"""
+
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import base64
-import numpy as np
 import csv
-import sys
-import zlib
-import time
-import mmap
 import h5py
 import pickle
-
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import numpy as np
 import utils
 
 
 csv.field_size_limit(sys.maxsize)
 
-FIELDNAMES = ['image_id', 'image_w','image_h','num_boxes', 'boxes', 'features']
-
-# infile = 'data/test2014_resnet101_faster_rcnn_genome_36.tsv'
-# data_outfile = 'data/test_bottom_up.hdf5'
-# indices_outfile = 'data/test_bottom_up_indicies.pkl'
-
+FIELDNAMES = ['image_id', 'image_w', 'image_h', 'num_boxes', 'boxes', 'features']
 infile = 'data/trainval_36/trainval_resnet101_faster_rcnn_genome_36.tsv'
 train_data_outfile = 'data/train36.hdf5'
 val_data_outfile = 'data/val36.hdf5'
@@ -46,13 +35,8 @@ num_fixed_boxes = 36
 
 
 if __name__ == '__main__':
-    # Verify we can read a tsv
-    with open(infile, "r+b") as tsv_in_file:
-        reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames = FIELDNAMES)
-        total_count = sum(1 for item in reader)
-
     h_train = h5py.File(train_data_outfile, "w")
-    h_val =  h5py.File(val_data_outfile, "w")
+    h_val = h5py.File(val_data_outfile, "w")
     train_indices = {}
     val_indices = {}
 
@@ -79,15 +63,16 @@ if __name__ == '__main__':
     train_counter = 0
     val_counter = 0
 
-    print("reading tsv...")
+    print "reading tsv..."
     with open(infile, "r+b") as tsv_in_file:
-        reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames = FIELDNAMES)
+        reader = csv.DictReader(tsv_in_file, delimiter='\t', fieldnames=FIELDNAMES)
         for item in reader:
             item['num_boxes'] = int(item['num_boxes'])
             image_id = int(item['image_id'])
             image_w = float(item['image_w'])
             image_h = float(item['image_h'])
-            bboxes = np.frombuffer(base64.decodestring(item['boxes']),
+            bboxes = np.frombuffer(
+                base64.decodestring(item['boxes']),
                 dtype=np.float32).reshape((item['num_boxes'], -1))
 
             box_width = bboxes[:, 2] - bboxes[:, 0]
@@ -104,9 +89,14 @@ if __name__ == '__main__':
             scaled_x = scaled_x[..., np.newaxis]
             scaled_y = scaled_y[..., np.newaxis]
 
-            spatial_features = np.concatenate((scaled_x, scaled_y, scaled_x +
-                scaled_width, scaled_y + scaled_height, scaled_width,
-                scaled_height), axis=1)
+            spatial_features = np.concatenate(
+                (scaled_x,
+                 scaled_y,
+                 scaled_x + scaled_width,
+                 scaled_y + scaled_height,
+                 scaled_width,
+                 scaled_height),
+                axis=1)
 
             if image_id in train_imgids:
                 train_imgids.remove(image_id)
@@ -139,4 +129,4 @@ if __name__ == '__main__':
     pickle.dump(val_indices, open(val_indices_outfile, 'wb'))
     h_train.close()
     h_val.close()
-    print("done!")
+    print "done!"
