@@ -52,6 +52,5 @@ class NewAttention(nn.Module):
         q_proj = self.q_proj(q).unsqueeze(1).repeat(1, k, 1)
         joint_repr = v_proj * q_proj
         joint_repr = self.dropout(joint_repr)
-        logits = self.linear(joint_repr)#.view(batch, k)
-        # print logits.size()
+        logits = self.linear(joint_repr)
         return logits

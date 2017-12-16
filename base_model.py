@@ -28,7 +28,7 @@ class BaseModel(nn.Module):
         w_emb = self.w_emb(q)
         q_emb = self.q_emb(w_emb) # [batch, q_dim]
 
-        att = self.v_att(v, q_emb)#.unsqueeze(2).expand_as(v)
+        att = self.v_att(v, q_emb)
         v_emb = (att * v).sum(1) # [batch, v_dim]
 
         q_repr = self.q_net(q_emb)
