@@ -13,5 +13,3 @@ if __name__ == '__main__':
 
     val_question_file = 'data/v2_OpenEnded_mscoco_val2014_questions.json'
     val_questions = json.load(open(val_question_file))['questions']
-
-    # occurence = filter_answers(answers, 9)

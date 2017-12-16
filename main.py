@@ -1,14 +1,11 @@
 import argparse
-import time
-import math
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
+from torch.utils.data import DataLoader
 import numpy as np
 
 from dataset import Dictionary, VQAFeatureDataset
-from modules import base_model
-from modules import relation_model
+import base_model
 from train import train
 import utils
 
@@ -17,13 +14,10 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type=str, default='dev', help='dev or train?')
     parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--log', type=str, default='logs/exp0.txt')
-    parser.add_argument('--num_hid', type=int, default=512)
+    parser.add_argument('--num_hid', type=int, default=1024)
     parser.add_argument('--model', type=str, default='baseline0')
-    parser.add_argument('--save_path', type=str, default=None)
-    # parser.add_argument('--lr', type=float, default=1e-3)
+    parser.add_argument('--output', type=str, default='saved_models/exp0')
     parser.add_argument('--batch_size', type=int, default=512)
-    # parser.add_argument('--dropout', type=float, default=0.2)
     parser.add_argument('--seed', type=int, default=1111, help='random seed')
     args = parser.parse_args()
     return args
@@ -53,26 +47,13 @@ if __name__ == '__main__':
     else:
         assert False, args.task
 
-    func_name = 'build_%s' % args.model
-    if 'baseline' in args.model:
-        model = getattr(base_model, func_name)(train_dset, args.num_hid).cuda()
-    elif 'rm' in args.model:
-        model = getattr(relation_model, func_name)(train_dset, args.num_hid).cuda()
-    else:
-        assert False, 'invalid'
-
-    # seems not necessary
-    # utils.init_net(model, None)
+    constructor = 'build_%s' % args.model
+    model = getattr(base_model, constructor)(train_dset, args.num_hid).cuda()
     model.w_emb.init_embedding('data/glove6b_init_300d.npy')
 
-    if args.task != 'dev':
-        model = nn.DataParallel(model).cuda()
+    # if args.task != 'dev':
+    #     model = nn.DataParallel(model).cuda()
 
-    logger = utils.Logger(args.log)
-    train(model,
-          train_dset,
-          eval_dset,
-          args.epochs,
-          batch_size,
-          logger,
-          args.save_path)
+    train_loader = DataLoader(train_dset, batch_size, shuffle=True, num_workers=1)
+    eval_loader =  DataLoader(eval_dset, batch_size, shuffle=True, num_workers=1)
+    train(model, train_loader, eval_loader, args.epochs, args.output)
