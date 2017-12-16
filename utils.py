@@ -61,6 +61,10 @@ def init_net(net, net_file):
 
 class Logger(object):
     def __init__(self, output_name):
+        dirname = os.path.dirname(output_name)
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+
         self.log_file = open(output_name, 'w')
         self.infos = {}
 
