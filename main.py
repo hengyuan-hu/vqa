@@ -1,9 +1,6 @@
 import argparse
-import time
-import math
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import numpy as np
 
@@ -17,7 +14,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--task', type=str, default='dev', help='dev or train?')
     parser.add_argument('--epochs', type=int, default=30)
-    parser.add_argument('--num_hid', type=int, default=512)
+    parser.add_argument('--num_hid', type=int, default=1024)
     parser.add_argument('--model', type=str, default='baseline0')
     parser.add_argument('--output', type=str, default='saved_models/exp0')
     parser.add_argument('--batch_size', type=int, default=512)
