@@ -1,3 +1,5 @@
+Bottom-Up and Top-Down Attention for Visual Question Answering
+
 This is a implementation of the VQA system described in "Bottom-Up and
 Top-Down Attention for Image Captioning and Visual Question Answering"
 (https://arxiv.org/abs/1707.07998) and "Tips and Tricks for Visual
